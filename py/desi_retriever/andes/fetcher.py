@@ -55,16 +55,16 @@ def get_specs(tileid=None,
     url = f'https://data.desi.lbl.gov/desi/spectro/redux/andes/tiles/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
     user, pwd = get_desi_login_password()
     kw = dict(auth=(user, pwd), verify=False)
-    
+
     with httpio.open(url, **kw) as fp:
         hdus = pyfits.open(fp)
         ftab = atpy.Table(hdus['FIBERMAP'].data)
-        
+
         if expid is not None:
             xind = ftab['EXPID'] == expid
         else:
-            xind = np.ones(len(ftab))
-        xids = np.nonzero((ftab['TARGETID'] == targetid)&xind)[0]
+            xind = np.ones(len(ftab), dtype=bool)
+        xids = np.nonzero((ftab['TARGETID'] == targetid) & xind)[0]
         if len(xids) == 0:
             print('no spectra')
             return
@@ -133,7 +133,13 @@ def get_rvspec_models(tileid=None,
     with httpio.open(url, **kw) as fp:
         hdus = pyfits.open(fp)
         ftab = atpy.Table(hdus['FIBERMAP'].data)
-        xids = np.nonzero(ftab['TARGETID'] == targetid)[0]
+
+        if expid is not None:
+            xind = ftab['EXPID'] == expid
+        else:
+            xind = np.ones(len(ftab), dtype=bool)
+        xids = np.nonzero((ftab['TARGETID'] == targetid) & xind)[0]
+
         if len(xids) == 0:
             print('no spectra')
             return
@@ -159,4 +165,3 @@ def get_rvspec_models(tileid=None,
                        z_model=zdat)
             rets.append(ret)
         return rets
-
