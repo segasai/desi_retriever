@@ -123,9 +123,9 @@ def get_rvspec_models(tileid=None,
     """
 
     if coadd:
-        prefix = 'rvmod_spectra'
-    else:
         prefix = 'rvmod_coadd'
+    else:
+        prefix = 'rvmod_spectra'
     spectrograph = fiber // 500
     url = f'https://data.desi.lbl.gov/desi/science/mws/redux/andes/{run}/rv_output/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
     user, pwd = get_desi_login_password()
