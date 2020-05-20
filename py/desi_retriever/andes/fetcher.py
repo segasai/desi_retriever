@@ -67,7 +67,7 @@ def get_specs(tileid=None,
         xids = np.nonzero((ftab['TARGETID'] == targetid) & xind)[0]
         if len(xids) == 0:
             print('no spectra')
-            return
+            return []
         bwave = hdus['B_WAVELENGTH'].data
         rwave = hdus['R_WAVELENGTH'].data
         zwave = hdus['Z_WAVELENGTH'].data
@@ -142,7 +142,7 @@ def get_rvspec_models(tileid=None,
 
         if len(xids) == 0:
             print('no spectra')
-            return
+            return []
         bwave = hdus['B_WAVELENGTH'].data
         rwave = hdus['R_WAVELENGTH'].data
         zwave = hdus['Z_WAVELENGTH'].data
