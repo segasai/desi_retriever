@@ -25,7 +25,8 @@ def get_specs(tileid=None,
               fiber=None,
               targetid=None,
               expid=None,
-              coadd=False):
+              coadd=False,
+              ):
     """
     Get DESI spectra 
     
@@ -73,9 +74,9 @@ def get_specs(tileid=None,
         zwave = hdus['Z_WAVELENGTH'].data
 
         rets = []
-        bdata = hdus['B_FLUX'].data
-        rdata = hdus['R_FLUX'].data
-        zdata = hdus['Z_FLUX'].data
+        bdata = hdus['B_FLUX'].section
+        rdata = hdus['R_FLUX'].section
+        zdata = hdus['Z_FLUX'].section
         rets = []
         for xid in xids:
             bdat = bdata[xid, :]
@@ -148,9 +149,9 @@ def get_rvspec_models(tileid=None,
         zwave = hdus['Z_WAVELENGTH'].data
 
         rets = []
-        bdata = hdus['B_MODEL'].data
-        rdata = hdus['R_MODEL'].data
-        zdata = hdus['Z_MODEL'].data
+        bdata = hdus['B_MODEL'].section
+        rdata = hdus['R_MODEL'].section
+        zdata = hdus['Z_MODEL'].section
         rets = []
         for xid in xids:
             bdat = bdata[xid, :]
