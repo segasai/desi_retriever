@@ -26,7 +26,7 @@ def get_specs(tileid=None,
               targetid=None,
               expid=None,
               coadd=False,
-              ):
+              dataset='andes'):
     """
     Get DESI spectra 
     
@@ -53,7 +53,7 @@ def get_specs(tileid=None,
     else:
         prefix = 'spectra'
     spectrograph = fiber // 500
-    url = f'https://data.desi.lbl.gov/desi/spectro/redux/andes/tiles/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
+    url = f'https://data.desi.lbl.gov/desi/spectro/redux/{dataset}/tiles/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
     user, pwd = get_desi_login_password()
     kw = dict(auth=(user, pwd), verify=False)
 
@@ -65,7 +65,10 @@ def get_specs(tileid=None,
             xind = ftab['EXPID'] == expid
         else:
             xind = np.ones(len(ftab), dtype=bool)
-        xids = np.nonzero((ftab['TARGETID'] == targetid) & xind)[0]
+        if targetid is not None:
+            xids = np.nonzero((ftab['TARGETID'] == targetid) & xind)[0]
+        else:
+            xids = np.nonzero((ftab['FIBER'] == fiber) & xind)[0]
         if len(xids) == 0:
             print('no spectra')
             return []
@@ -99,7 +102,8 @@ def get_rvspec_models(tileid=None,
                       targetid=None,
                       expid=None,
                       coadd=False,
-                      run='200507'):
+                      run='200507',
+                      dataset='andes'):
     """
     Get RVSpecfit models
     
@@ -110,10 +114,11 @@ def get_rvspec_models(tileid=None,
     fiber: int
     targetid: int
     expid: int (optional)
-    coadd: bool 
+    coadd: bool
          If true read coadded spectra
     run: string
          The string identifying a software run
+    dataset: the dataset fitted (i.e. andes/sv_daily)
 
     Returns
     -------
@@ -128,7 +133,7 @@ def get_rvspec_models(tileid=None,
     else:
         prefix = 'rvmod_spectra'
     spectrograph = fiber // 500
-    url = f'https://data.desi.lbl.gov/desi/science/mws/redux/andes/{run}/rv_output/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
+    url = f'https://data.desi.lbl.gov/desi/science/mws/redux/{dataset}/{run}/rv_output/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
     user, pwd = get_desi_login_password()
     kw = dict(auth=(user, pwd), verify=False)
     with httpio.open(url, **kw) as fp:
@@ -139,7 +144,10 @@ def get_rvspec_models(tileid=None,
             xind = ftab['EXPID'] == expid
         else:
             xind = np.ones(len(ftab), dtype=bool)
-        xids = np.nonzero((ftab['TARGETID'] == targetid) & xind)[0]
+        if targetid is not None:
+            xids = np.nonzero((ftab['TARGETID'] == targetid) & xind)[0]
+        else:
+            xids = np.nonzero((ftab['FIBER'] == fiber) & xind)[0]
 
         if len(xids) == 0:
             print('no spectra')
