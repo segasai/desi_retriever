@@ -89,16 +89,16 @@ def get_specs(tileid=None,
             zmask = hdus['Z_MASK'].section
         rets = []
         for xid in xids:
-            bdat = bdata[xid, :]
-            rdat = rdata[xid, :]
-            zdat = zdata[xid, :]
+            bdata_cur = bdata[xid, :]
+            rdata_cur = rdata[xid, :]
+            zdata_cur = zdata[xid, :]
 
             ret = dict(b_wavelength=bwave,
                        r_wavelength=rwave,
                        z_wavelength=zwave,
-                       b_flux=bdat,
-                       r_flux=rdat,
-                       z_flux=zdat)
+                       b_flux=bdata_cur,
+                       r_flux=rdata_cur,
+                       z_flux=zdata_cur)
             if mask:
                 bmask_cur = bmask[xid, :]
                 rmask_cur = rmask[xid, :]
@@ -178,15 +178,15 @@ def get_rvspec_models(tileid=None,
         zdata = hdus['Z_MODEL'].section
         rets = []
         for xid in xids:
-            bdat = bdata[xid, :]
-            rdat = rdata[xid, :]
-            zdat = zdata[xid, :]
+            bdata_cur = bdata[xid, :]
+            rdata_cur = rdata[xid, :]
+            zdata_cur = zdata[xid, :]
 
             ret = dict(b_wavelength=bwave,
                        r_wavelength=rwave,
                        z_wavelength=zwave,
-                       b_model=bdat,
-                       r_model=rdat,
-                       z_model=zdat)
+                       b_model=bdata_cur,
+                       r_model=rdata_cur,
+                       z_model=zdata_cur)
             rets.append(ret)
         return rets
