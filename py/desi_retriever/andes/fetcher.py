@@ -16,6 +16,11 @@ class si:
 def get_desi_login_password():
     if si.DESI_USER is None:
         config = os.environ['HOME'] + '/.desi_http_user'
+        if not os.path.exists(config):
+            raise Exception('''You need to specify the DESI_USER/DESI_PASSWD.
+put them in $HOME/.desi_http_user like that
+username:password
+''')
         user, pwd = open(config).read().rstrip().split(':')
         si.DESI_USER, si.DESI_PASSWD = user, pwd
     return si.DESI_USER, si.DESI_PASSWD
@@ -29,7 +34,8 @@ def get_specs(tileid=None,
               expid=None,
               coadd=False,
               dataset='andes',
-              mask=False):
+              mask=False,
+              ivar=False):
     """
     Get DESI spectra 
     
@@ -75,37 +81,38 @@ def get_specs(tileid=None,
         if len(xids) == 0:
             print('no spectra')
             return []
-        bwave = hdus['B_WAVELENGTH'].data
-        rwave = hdus['R_WAVELENGTH'].data
-        zwave = hdus['Z_WAVELENGTH'].data
 
-        rets = []
-        bdata = hdus['B_FLUX'].section
-        rdata = hdus['R_FLUX'].section
-        zdata = hdus['Z_FLUX'].section
+        waves = {}
+        for arm in 'BRZ':
+            waves[arm] = hdus[arm + '_WAVELENGTH'].data
+
+        fluxes = {}
+        for arm in 'BRZ':
+            fluxes[arm] = hdus[arm + '_FLUX'].section
+
+        masks = {}
         if mask:
-            bmask = hdus['B_MASK'].section
-            rmask = hdus['R_MASK'].section
-            zmask = hdus['Z_MASK'].section
+            for arm in 'BRZ':
+                masks[arm] = hdus[arm + '_MASK'].section
+
+        ivars = {}
+        if ivar:
+            for arm in 'BRZ':
+                ivars[arm] = hdus[arm + '_IVAR'].section
+
         rets = []
         for xid in xids:
-            bdata_cur = bdata[xid, :]
-            rdata_cur = rdata[xid, :]
-            zdata_cur = zdata[xid, :]
-
-            ret = dict(b_wavelength=bwave,
-                       r_wavelength=rwave,
-                       z_wavelength=zwave,
-                       b_flux=bdata_cur,
-                       r_flux=rdata_cur,
-                       z_flux=zdata_cur)
+            ret = dict(b_wavelength=waves['B'],
+                       r_wavelength=waves['R'],
+                       z_wavelength=waves['Z'])
+            for arm in 'BRZ':
+                ret[arm.lower() + '_flux'] = fluxes[arm][xid, :]
             if mask:
-                bmask_cur = bmask[xid, :]
-                rmask_cur = rmask[xid, :]
-                zmask_cur = zmask[xid, :]
-                ret['b_mask'] = bmask_cur
-                ret['r_mask'] = rmask_cur
-                ret['z_mask'] = zmask_cur
+                for arm in 'BRZ':
+                    ret[arm.lower() + '_mask'] = masks[arm][xid, :]
+            if ivar:
+                for arm in 'BRZ':
+                    ret[arm.lower() + '_ivar'] = ivars[arm][xid, :]
 
             rets.append(ret)
         return rets
