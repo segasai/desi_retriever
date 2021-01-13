@@ -133,7 +133,7 @@ def get_rvspec_models(tileid=None,
     else:
         prefix = 'rvmod_spectra'
     spectrograph = fiber // 500
-    url = f'https://data.desi.lbl.gov/desi/science/mws/redux/{dataset}/{run}/rv_output/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
+    url = f'https://data.desi.lbl.gov/desi/science/mws/redux/{dataset}/rv_output/{run}/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
     user, pwd = get_desi_login_password()
     kw = dict(auth=(user, pwd), verify=False)
     with httpio.open(url, **kw) as fp:
