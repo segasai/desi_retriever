@@ -2,3 +2,4 @@ astropy
 httpio
 urllib3
 numpy
+pylru

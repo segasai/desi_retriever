@@ -4,6 +4,7 @@ import numpy as np
 import astropy.io.fits as pyfits
 import urllib3
 import os
+from pylru import lrudecorator
 urllib3.disable_warnings()
 
 
@@ -20,13 +21,15 @@ def get_desi_login_password():
     return si.DESI_USER, si.DESI_PASSWD
 
 
+@lrudecorator(100)
 def get_specs(tileid=None,
               night=None,
               fiber=None,
               targetid=None,
               expid=None,
               coadd=False,
-              dataset='andes'):
+              dataset='andes',
+              mask=False):
     """
     Get DESI spectra 
     
@@ -80,6 +83,10 @@ def get_specs(tileid=None,
         bdata = hdus['B_FLUX'].section
         rdata = hdus['R_FLUX'].section
         zdata = hdus['Z_FLUX'].section
+        if mask:
+            bmask = hdus['B_MASK'].section
+            rmask = hdus['R_MASK'].section
+            zmask = hdus['Z_MASK'].section
         rets = []
         for xid in xids:
             bdat = bdata[xid, :]
@@ -92,10 +99,19 @@ def get_specs(tileid=None,
                        b_flux=bdat,
                        r_flux=rdat,
                        z_flux=zdat)
+            if mask:
+                bmask_cur = bmask[xid, :]
+                rmask_cur = rmask[xid, :]
+                zmask_cur = zmask[xid, :]
+                ret['b_mask'] = bmask_cur
+                ret['r_mask'] = rmask_cur
+                ret['z_mask'] = zmask_cur
+
             rets.append(ret)
         return rets
 
 
+@lrudecorator(100)
 def get_rvspec_models(tileid=None,
                       night=None,
                       fiber=None,
