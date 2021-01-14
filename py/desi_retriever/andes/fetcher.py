@@ -68,6 +68,7 @@ def get_specs(tileid=None,
     block_size = 2880 * 10  # caching block
     with httpio.open(url, block_size=block_size, **kw) as fp:
         hdus = pyfits.open(fp)
+
         ftab = atpy.Table(hdus['FIBERMAP'].data)
 
         if expid is not None:
@@ -102,10 +103,9 @@ def get_specs(tileid=None,
 
         rets = []
         for xid in xids:
-            ret = dict(b_wavelength=waves['B'],
-                       r_wavelength=waves['R'],
-                       z_wavelength=waves['Z'])
+            ret = {}
             for arm in 'BRZ':
+                ret[arm.lower() + '_wavelength'] = waves[arm]
                 ret[arm.lower() + '_flux'] = fluxes[arm][xid, :]
             if mask:
                 for arm in 'BRZ':
@@ -178,25 +178,20 @@ def get_rvspec_models(tileid=None,
             print('no spectra')
             return []
 
-        bwave = hdus['B_WAVELENGTH'].data
-        rwave = hdus['R_WAVELENGTH'].data
-        zwave = hdus['Z_WAVELENGTH'].data
+        waves = {}
+        for arm in 'BRZ':
+            waves[arm] = hdus[arm + '_WAVELENGTH'].data
+
+        models = {}
+        for arm in 'BRZ':
+            models[arm] = hdus[arm + '_MODEL'].section
 
         rets = []
-        bdata = hdus['B_MODEL'].section
-        rdata = hdus['R_MODEL'].section
-        zdata = hdus['Z_MODEL'].section
-        rets = []
+
         for xid in xids:
-            bdata_cur = bdata[xid, :]
-            rdata_cur = rdata[xid, :]
-            zdata_cur = zdata[xid, :]
-
-            ret = dict(b_wavelength=bwave,
-                       r_wavelength=rwave,
-                       z_wavelength=zwave,
-                       b_model=bdata_cur,
-                       r_model=rdata_cur,
-                       z_model=zdata_cur)
+            ret = {}
+            for arm in 'BRZ':
+                ret[arm.lower() + '_wavelength'] = waves[arm][xid, :]
+                ret[arm.lower() + '_model'] = models[arm][xid, :]
             rets.append(ret)
         return rets
