@@ -1,16 +1,18 @@
 import astropy.table as atpy
+import copy
 import httpio
 import numpy as np
 import astropy.io.fits as pyfits
 import urllib3
 import os
-from pylru import lrudecorator
+from pylru import lrudecorator, lrucache
 urllib3.disable_warnings()
 
 
 class si:
     DESI_USER = None
     DESI_PASSWD = None
+    cache = lrucache(100)
 
 
 def get_desi_login_password():
@@ -67,6 +69,8 @@ def get_specs(tileid=None,
     kw = dict(auth=(user, pwd), verify=False)
     block_size = 2880 * 10  # caching block
     with httpio.open(url, block_size=block_size, **kw) as fp:
+        if url in si.cache:
+            fp._cache = si.cache[url]
         hdus = pyfits.open(fp)
 
         ftab = atpy.Table(hdus['FIBERMAP'].data)
@@ -115,6 +119,7 @@ def get_specs(tileid=None,
                     ret[arm.lower() + '_ivar'] = ivars[arm][xid, :]
 
             rets.append(ret)
+        si.cache[url] = copy.copy(fp._cache)
         return rets
 
 
@@ -162,6 +167,8 @@ def get_rvspec_models(tileid=None,
     kw = dict(auth=(user, pwd), verify=False)
 
     with httpio.open(url, block_size=block_size, **kw) as fp:
+        if url in si.cache:
+            fp._cache = si.cache[url]
         hdus = pyfits.open(fp)
         ftab = atpy.Table(hdus['FIBERMAP'].data)
 
@@ -194,4 +201,5 @@ def get_rvspec_models(tileid=None,
                 ret[arm.lower() + '_wavelength'] = waves[arm]
                 ret[arm.lower() + '_model'] = models[arm][xid, :]
             rets.append(ret)
+        si.cache[url] = copy.copy(fp._cache)
         return rets
