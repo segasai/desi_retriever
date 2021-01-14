@@ -191,7 +191,7 @@ def get_rvspec_models(tileid=None,
         for xid in xids:
             ret = {}
             for arm in 'BRZ':
-                ret[arm.lower() + '_wavelength'] = waves[arm][xid, :]
+                ret[arm.lower() + '_wavelength'] = waves[arm]
                 ret[arm.lower() + '_model'] = models[arm][xid, :]
             rets.append(ret)
         return rets
