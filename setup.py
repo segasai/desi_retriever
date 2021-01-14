@@ -35,22 +35,20 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-#exec(open('py/sqlutilpy/version.py','r').read())
-#VERSION  =__version__
-VERSION = '0.0.1'
+VERSION = open('version.txt').read().rstrip()
 VERSION1 = get_revision()
 if VERSION1 != '':
     VERSION = VERSION + '-git-' + VERSION1
-#VERSION = VERSIONPIP+'dev'+get_revision()
-
+with open('py/desi_retriever/_version.py', 'w') as fd:
+    print('version="%s" ' % VERSION, file=fd)
 setup(
     name="desi_retriever",
     version=VERSION,
     author="Sergey Koposov",
     author_email="skoposov@cmu.edu",
-    description=(""),
+    description="Fetch DESI spectra of individual objects by tile/night/fiber",
     license="BSD",
-    keywords="numpy postgresql query sql sqlite array",
+    keywords="DESI spectrum",
     url="https://github.com/segasai/desi_retriever",
     packages=[
         'desi_retriever', 'desi_retriever/andes', 'desi_retriever/blanc'
@@ -62,8 +60,7 @@ setup(
     long_description_content_type='text/markdown',
     install_requires=open('requirements.txt').readlines(),
     classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Topic :: Utilities",
-        "License :: OSI Approved :: BSD License",
+        "Development Status :: 3 - Alpha", "Topic :: Utilities",
+        "License :: OSI Approved :: BSD License"
     ],
 )
