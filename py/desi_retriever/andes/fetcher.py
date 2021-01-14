@@ -65,8 +65,8 @@ def get_specs(tileid=None,
     url = f'https://data.desi.lbl.gov/desi/spectro/redux/{dataset}/tiles/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
     user, pwd = get_desi_login_password()
     kw = dict(auth=(user, pwd), verify=False)
-
-    with httpio.open(url, **kw) as fp:
+    block_size = 2880 * 10  # caching block
+    with httpio.open(url, block_size=block_size, **kw) as fp:
         hdus = pyfits.open(fp)
         ftab = atpy.Table(hdus['FIBERMAP'].data)
 
@@ -157,9 +157,11 @@ def get_rvspec_models(tileid=None,
         prefix = 'rvmod_spectra'
     spectrograph = fiber // 500
     url = f'https://data.desi.lbl.gov/desi/science/mws/redux/{dataset}/rv_output/{run}/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
+    block_size = 2880 * 10  # caching block
     user, pwd = get_desi_login_password()
     kw = dict(auth=(user, pwd), verify=False)
-    with httpio.open(url, **kw) as fp:
+
+    with httpio.open(url, block_size=block_size, **kw) as fp:
         hdus = pyfits.open(fp)
         ftab = atpy.Table(hdus['FIBERMAP'].data)
 
@@ -175,6 +177,7 @@ def get_rvspec_models(tileid=None,
         if len(xids) == 0:
             print('no spectra')
             return []
+
         bwave = hdus['B_WAVELENGTH'].data
         rwave = hdus['R_WAVELENGTH'].data
         zwave = hdus['Z_WAVELENGTH'].data
