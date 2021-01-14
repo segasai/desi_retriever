@@ -44,25 +44,35 @@ def get_specs(tileid=None,
     Parameters
     ----------
     tileid: int
-    night: int
+    night: int or string
+         The night identifier (i.e. 20200220 or 'all' or 'deep' for coadds)
     fiber: int
-    targetid: int
+    targetid: int (optional)
     expid: int (optional)
     coadd: bool
          If true read coadded spectra
+    mask: bool
+         If true return the masks as well
+    ivar: bool
+         If true return the inverse variances
 
     Returns
     -------
     ret: list(dict)
-        The list of dictionaries where each dictionary
+        The list of dictionaries for each observation
+        where each dictionary
         has keywords b_wavelength, r_wavelength, z_wavelength
-        b_flux etc
+        b_flux, b_mask, b_ivar
 
     """
     if coadd:
         prefix = 'coadd'
     else:
         prefix = 'spectra'
+    if fiber is None:
+        raise Exception(
+            'Fiber must be specified as it is needed to identify the ' +
+            'spectrograph')
     spectrograph = fiber // 500
     url = f'https://data.desi.lbl.gov/desi/spectro/redux/{dataset}/tiles/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
     user, pwd = get_desi_login_password()
@@ -160,8 +170,13 @@ def get_rvspec_models(tileid=None,
         prefix = 'rvmod_coadd'
     else:
         prefix = 'rvmod_spectra'
+    if fiber is None:
+        raise Exception(
+            'Fiber must be specified as it is needed to identify the ' +
+            'spectrograph')
     spectrograph = fiber // 500
-    url = f'https://data.desi.lbl.gov/desi/science/mws/redux/{dataset}/rv_output/{run}/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
+    url = f'https://data.desi.lbl.gov/desi/science/mws/redux/{dataset}/rv_outpu
+t/{run}/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
     block_size = 2880 * 10  # caching block
     user, pwd = get_desi_login_password()
     kw = dict(auth=(user, pwd), verify=False)
