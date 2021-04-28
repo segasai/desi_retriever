@@ -38,7 +38,7 @@ def read(fname):
 VERSION = open('version.txt').read().rstrip()
 VERSION1 = get_revision()
 if VERSION1 != '':
-    VERSION = VERSION + '-git-' + VERSION1
+    VERSION = VERSION + '+dev' + VERSION1
 with open('py/desi_retriever/_version.py', 'w') as fd:
     print('version="%s" ' % VERSION, file=fd)
 setup(
@@ -51,7 +51,8 @@ setup(
     keywords="DESI spectrum",
     url="https://github.com/segasai/desi_retriever",
     packages=[
-        'desi_retriever', 'desi_retriever/andes', 'desi_retriever/blanc'
+        'desi_retriever', 'desi_retriever/andes', 'desi_retriever/blanc',
+        'desi_retriever/denali'
     ],
     #scripts = [fname for fname in glob.glob(os.path.join('bin', '*'))],
     package_dir={'': 'py'},
