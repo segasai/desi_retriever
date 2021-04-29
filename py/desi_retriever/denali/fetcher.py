@@ -145,9 +145,10 @@ def get_rvspec_models(tileid=None,
                       fiber=None,
                       targetid=None,
                       expid=None,
-                      coadd=False,
+                      coadd=True,
+                      coadd_type='pernight',
                       run='210112',
-                      dataset='blanc'):
+                      dataset='denali'):
     """
     Get RVSpecfit models
     
@@ -181,7 +182,11 @@ def get_rvspec_models(tileid=None,
             'Fiber must be specified as it is needed to identify the ' +
             'spectrograph')
     spectrograph = fiber // 500
-    url = f'https://data.desi.lbl.gov/desi/science/mws/redux/{dataset}/rv_output/{run}/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night}.fits'
+    if coadd_type == 'cumulative':
+        night1 = f'thru{night}'
+    else:
+        night1 = night
+    url = f'https://data.desi.lbl.gov/desi/science/mws/redux/{dataset}/rv_output/{run}/{coadd_type}/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night1}.fits'
     block_size = 2880 * 10  # caching block
     user, pwd = get_desi_login_password()
     kw = dict(auth=(user, pwd), verify=False)
