@@ -51,8 +51,11 @@ setup(
     keywords="DESI spectrum",
     url="https://github.com/segasai/desi_retriever",
     packages=[
-        'desi_retriever', 'desi_retriever/andes', 'desi_retriever/blanc',
-        'desi_retriever/denali'
+        'desi_retriever',
+        'desi_retriever/andes',
+        'desi_retriever/blanc',
+        'desi_retriever/denali',
+        'desi_retriever/daily',
     ],
     #scripts = [fname for fname in glob.glob(os.path.join('bin', '*'))],
     package_dir={'': 'py'},
