@@ -3,3 +3,4 @@ httpio
 urllib3
 numpy
 pylru
+fsspec
