@@ -43,6 +43,8 @@ class GaiaIndex:
 
     def search_id(self, gaiaid_new):
         xid = np.searchsorted(self.gaiaid, gaiaid_new)
+        if xid >= len(self.gaiaid) or xid < 0:
+            return None
         if self.gaiaid[xid] == gaiaid_new:
             return dict(targetid=self.targetid[xid],
                         survey=self.survey[xid],
@@ -197,13 +199,14 @@ def get_specs(
 
 
 @lrudecorator(100)
-def get_rvspec_models(tileid=None,
+def get_rvspec_models(gaia_edr3_source_id=None,
+                      tileid=None,
                       night=None,
                       fiber=None,
                       targetid=None,
                       expid=None,
                       coadd=True,
-                      coadd_type='healpix_main_bright',
+                      coadd_type='healpix',
                       run='210803',
                       dataset='everest'):
     """
@@ -229,23 +232,38 @@ def get_rvspec_models(tileid=None,
         has keywords b_wavelength, r_wavelength, z_wavelength
         b_model etc
     """
-
+    user, pwd = get_desi_login_password()
+    if gaia_edr3_source_id is not None:
+        fetch_gaia_index()
+        res = si.gaiaIndex.search_id(gaia_edr3_source_id)
+        if res is None:
+            raise ValueError('object not found')
+        survey = res['survey']
+        subsurvey = res['subsurvey']
+        hpx = res['hpx']
+        targetid = res['targetid']
+        if survey[:2] == 'sv':
+            survey_short = 'sv'
     if coadd:
         prefix = 'rvmod_coadd'
     else:
         prefix = 'rvmod_spectra'
-    if fiber is None:
-        raise Exception(
-            'Fiber must be specified as it is needed to identify the ' +
-            'spectrograph')
-    spectrograph = fiber // 500
+    if coadd_type != 'healpix':
+        if fiber is None:
+            raise ValueError(
+                'Fiber must be specified as it is needed to identify the ' +
+                'spectrograph')
+        spectrograph = fiber // 500
     if coadd_type == 'cumulative':
         night1 = f'thru{night}'
     else:
         night1 = night
-    url = f'https://data.desi.lbl.gov/desi/science/mws/redux/{dataset}/rv_output/{run}/{coadd_type}/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night1}.fits'
+    if tileid is not None:
+        url = f'https://data.desi.lbl.gov/desi/science/mws/redux/{dataset}/tiles/{coadd_type}/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night1}.fits'
+    elif hpx is not None:
+        url = f'https://data.desi.lbl.gov/desi/science/mws/redux/{dataset}/rv_output/{run}/healpix_{survey_short}_{subsurvey}/{hpx//100}/{hpx}/{prefix}-{survey}-{subsurvey}-{hpx}.fits'
+
     block_size = 2880 * 10  # caching block
-    user, pwd = get_desi_login_password()
     kw = dict(auth=(user, pwd), verify=False)
 
     with httpio.open(url, block_size=block_size, **kw) as fp:
