@@ -1,11 +1,17 @@
 # desi_retriever
 
+This is a tool that allows you to fetch desi spectra without manually downloading them 
+
+## Installation
+
 To install just do 
 
 `pip install https://github.com/segasai/desi_retriever/archive/master.zip`
 
 You also need to set-up the DESI user/password. You need to put the login password in the file 
 $HOME/.desi_http_user in the format login:password
+
+## Usage
 
 Then to fetch a given spectrum from coadd you can do 
  
