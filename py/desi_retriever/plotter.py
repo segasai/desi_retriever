@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
+import scipy.stats
 import numpy as np
 
 
-def plot(D, model=None, fig=None):
+def plot(D, model=None, fig=None, percs=None):
     if fig is None:
         fig = plt.gcf()
         plt.clf()
@@ -21,5 +22,12 @@ def plot(D, model=None, fig=None):
                          model[filt + '_model'],
                          color=colHash1[filt],
                          alpha=0.5)
+    if percs is not None:
+        for i, filt in enumerate('brz'):
+            vals = [
+                scipy.stats.scoreatpercentile(D[filt + '_flux'], _)
+                for _ in percs
+            ]
+            axes[i].set_ylim(*vals)
     plt.xlabel('Wavelength')
     plt.draw()
