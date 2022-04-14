@@ -33,6 +33,7 @@ username:password
 
 
 class GaiaIndex:
+
     def __init__(self, gaiaid, targetid, survey, subsurvey, hpx, row):
         self.gaiaid = gaiaid
         self.targetid = targetid
@@ -67,80 +68,7 @@ def fetch_gaia_index():
                              D['subsurvey'], D['hpx'], D['row'])
 
 
-@lrudecorator(100)
-def get_specs(
-    gaia_edr3_source_id=None,
-    tileid=None,
-    night=None,
-    fiber=None,
-    hpx=None,
-    targetid=None,
-    expid=None,
-    coadd=True,
-    coadd_type='healpix',
-    dataset='everest',
-    survey=None,
-    subsurvey=None,
-    mask=False,
-    ivar=False,
-):
-    """
-    Get DESI spectra
-    
-    Parameters
-    ----------
-    tileid: int
-    night: int or string
-         The night identifier (i.e. 20200220 or 'all' or 'deep' for coadds)
-    fiber: int
-    targetid: int (optional)
-    expid: int (optional)
-    coadd: bool
-         If true read coadded spectra
-    mask: bool
-         If true return the masks as well
-    ivar: bool
-         If true return the inverse variances
-
-    Returns
-    -------
-    ret: list(dict)
-        The list of dictionaries for each observation
-        where each dictionary
-        has keywords b_wavelength, r_wavelength, z_wavelength
-        b_flux, b_mask, b_ivar
-
-    """
-    user, pwd = get_desi_login_password()
-
-    if coadd:
-        prefix = 'coadd'
-    else:
-        prefix = 'spectra'
-    if coadd_type != 'healpix':
-        if fiber is None:
-            raise Exception(
-                'Fiber must be specified as it is needed to identify the ' +
-                'spectrograph')
-        spectrograph = fiber // 500
-    if coadd_type == 'cumulative':
-        night1 = f'thru{night}'
-    else:
-        night1 = night
-    if gaia_edr3_source_id is not None:
-        fetch_gaia_index()
-        res = si.gaiaIndex.search_id(gaia_edr3_source_id)
-        if res is None:
-            raise ValueError('object not found')
-        survey = res['survey']
-        subsurvey = res['subsurvey']
-        hpx = res['hpx']
-        targetid = res['targetid']
-    if tileid is not None:
-        url = f'https://data.desi.lbl.gov/desi/spectro/redux/{dataset}/tiles/{coadd_type}/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night1}.fits'
-    elif hpx is not None:
-        url = f'https://data.desi.lbl.gov/desi/spectro/redux/{dataset}/healpix//{survey}/{subsurvey}/{hpx//100}/{hpx}/{prefix}-{survey}-{subsurvey}-{hpx}.fits'
-
+def read_spectra(url, user, pwd, targetid, expid, fiber, mask, ivar):
     kw = dict(auth=(user, pwd), verify=False)
     block_size = 2880 * 10  # caching block
     with httpio.open(url, block_size=block_size, **kw) as fp:
@@ -196,6 +124,81 @@ def get_specs(
             rets.append(ret)
         si.cache[url] = copy.copy(fp._cache)
         return rets
+
+
+@lrudecorator(100)
+def get_specs(gaia_edr3_source_id=None,
+              tileid=None,
+              night=None,
+              fiber=None,
+              hpx=None,
+              targetid=None,
+              expid=None,
+              coadd=True,
+              group_type='healpix',
+              dataset='everest',
+              survey=None,
+              subsurvey=None,
+              mask=False,
+              ivar=False):
+    """
+    Get DESI spectra
+    
+    Parameters
+    ----------
+    tileid: int
+    night: int or string
+         The night identifier (i.e. 20200220 or 'all' or 'deep' for coadds)
+    fiber: int
+    targetid: int (optional)
+    expid: int (optional)
+    coadd: bool
+         If true read coadded spectra
+    mask: bool
+         If true return the masks as well
+    ivar: bool
+         If true return the inverse variances
+
+    Returns
+    -------
+    ret: list(dict)
+        The list of dictionaries for each observation
+        where each dictionary
+        has keywords b_wavelength, r_wavelength, z_wavelength
+        b_flux, b_mask, b_ivar
+
+    """
+    user, pwd = get_desi_login_password()
+
+    if coadd:
+        prefix = 'coadd'
+    else:
+        prefix = 'spectra'
+    if coadd_type != 'healpix':
+        if fiber is None:
+            raise Exception(
+                'Fiber must be specified as it is needed to identify the ' +
+                'spectrograph')
+        spectrograph = fiber // 500
+
+    if coadd_type == 'cumulative':
+        night1 = f'thru{night}'
+    else:
+        night1 = night
+    if gaia_edr3_source_id is not None:
+        fetch_gaia_index()
+        res = si.gaiaIndex.search_id(gaia_edr3_source_id)
+        if res is None:
+            raise ValueError('object not found')
+        survey = res['survey']
+        subsurvey = res['subsurvey']
+        hpx = res['hpx']
+        targetid = res['targetid']
+    if tileid is not None:
+        url = f'https://data.desi.lbl.gov/desi/spectro/redux/{dataset}/tiles/{coadd_type}/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night1}.fits'
+    elif hpx is not None:
+        url = f'https://data.desi.lbl.gov/desi/spectro/redux/{dataset}/healpix//{survey}/{subsurvey}/{hpx//100}/{hpx}/{prefix}-{survey}-{subsurvey}-{hpx}.fits'
+    return read_spectra(url, user, pwd, targetid, expid, fiber, mask, ivar)
 
 
 @lrudecorator(100)
