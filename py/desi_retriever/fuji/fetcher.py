@@ -126,6 +126,50 @@ def read_spectra(url, user, pwd, targetid, expid, fiber, mask, ivar):
         return rets
 
 
+def read_models(url, user, pwd, targetid, fiber, expid=None):
+
+    block_size = 2880 * 10  # caching block
+    kw = dict(auth=(user, pwd), verify=False)
+
+    with httpio.open(url, block_size=block_size, **kw) as fp:
+        if url in si.cache:
+            fp._cache = si.cache[url]
+        hdus = pyfits.open(fp)
+        ftab = atpy.Table(hdus['FIBERMAP'].data)
+
+        if expid is not None:
+            xind = ftab['EXPID'] == expid
+        else:
+            xind = np.ones(len(ftab), dtype=bool)
+        if targetid is not None:
+            xids = np.nonzero((ftab['TARGETID'] == targetid) & xind)[0]
+        else:
+            xids = np.nonzero((ftab['FIBER'] == fiber) & xind)[0]
+
+        if len(xids) == 0:
+            print('no spectra')
+            return []
+
+        waves = {}
+        for arm in 'BRZ':
+            waves[arm] = hdus[arm + '_WAVELENGTH'].data
+
+        models = {}
+        for arm in 'BRZ':
+            models[arm] = hdus[arm + '_MODEL'].section
+
+        rets = []
+
+        for xid in xids:
+            ret = {}
+            for arm in 'BRZ':
+                ret[arm.lower() + '_wavelength'] = waves[arm]
+                ret[arm.lower() + '_model'] = models[arm][xid, :]
+            rets.append(ret)
+        si.cache[url] = copy.copy(fp._cache)
+        return rets
+
+
 @lrudecorator(100)
 def get_specs(gaia_edr3_source_id=None,
               tileid=None,
@@ -226,13 +270,17 @@ def get_rvspec_models(gaia_edr3_source_id=None,
                       fiber=None,
                       targetid=None,
                       expid=None,
+                      hpx=None,
                       coadd=True,
-                      coadd_type='healpix',
-                      run='210803',
-                      dataset='everest'):
+                      survey=None,
+                      subsurvey=None,
+                      spec_type='coadd',
+                      group_type='healpix',
+                      run='220309',
+                      dataset='fuji'):
     """
     Get RVSpecfit models
-    
+
     Parameters
     ----------
     tileid: int
@@ -263,64 +311,32 @@ def get_rvspec_models(gaia_edr3_source_id=None,
         subsurvey = res['subsurvey']
         hpx = res['hpx']
         targetid = res['targetid']
-        if survey[:2] == 'sv':
-            survey_short = 'sv'
-    if coadd:
-        prefix = 'rvmod_coadd'
-    else:
-        prefix = 'rvmod_spectra'
-    if coadd_type != 'healpix':
+    if spec_type not in ['coadd', 'cframe', 'spectra']:
+        raise Exception('unknown')
+    if group_type != 'healpix':
         if fiber is None:
             raise ValueError(
                 'Fiber must be specified as it is needed to identify the ' +
                 'spectrograph')
         spectrograph = fiber // 500
-    if coadd_type == 'cumulative':
+    if group_type == 'cumulative':
         night1 = f'thru{night}'
     else:
         night1 = night
-    if tileid is not None:
-        url = f'https://data.desi.lbl.gov/desi/science/mws/redux/{dataset}/tiles/{coadd_type}/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night1}.fits'
-    elif hpx is not None:
-        url = f'https://data.desi.lbl.gov/desi/science/mws/redux/{dataset}/rv_output/{run}/healpix_{survey_short}_{subsurvey}/{hpx//100}/{hpx}/{prefix}-{survey}-{subsurvey}-{hpx}.fits'
 
-    block_size = 2880 * 10  # caching block
-    kw = dict(auth=(user, pwd), verify=False)
+    data_desi = (f'https://data.desi.lbl.gov/desi/science/mws/redux/'
+                 f'{dataset}/rv_output/{run}/')
+    if group_type == 'tiles/cumulative':
+        fname = f'rvmod_`{spec_type}-{spectrograph}-{tileid}-{night1}.fits'
+        url = (f'{data_desi}/tiles/cumulative/' + f'{tileid}/{night}/{fname}')
+    elif group_type == 'tiles':
+        fname = f'rvmod_{spec_type}-{spectrograph}-{tileid}-{night1}.fits'
+        url = (f'{data_desi}/tiles/{tileid}/'
+               f'{night}/{fname}')
+    elif group_type == 'healpix':
+        fname = f'rvmod_{spec_type}-{survey}-{subsurvey}-{hpx}.fits'
+        url = (f'{data_desi}/healpix/{survey}/'
+               f'{subsurvey}/{hpx//100}/{hpx}/{fname}')
+        print(url)
 
-    with httpio.open(url, block_size=block_size, **kw) as fp:
-        if url in si.cache:
-            fp._cache = si.cache[url]
-        hdus = pyfits.open(fp)
-        ftab = atpy.Table(hdus['FIBERMAP'].data)
-
-        if expid is not None:
-            xind = ftab['EXPID'] == expid
-        else:
-            xind = np.ones(len(ftab), dtype=bool)
-        if targetid is not None:
-            xids = np.nonzero((ftab['TARGETID'] == targetid) & xind)[0]
-        else:
-            xids = np.nonzero((ftab['FIBER'] == fiber) & xind)[0]
-
-        if len(xids) == 0:
-            print('no spectra')
-            return []
-
-        waves = {}
-        for arm in 'BRZ':
-            waves[arm] = hdus[arm + '_WAVELENGTH'].data
-
-        models = {}
-        for arm in 'BRZ':
-            models[arm] = hdus[arm + '_MODEL'].section
-
-        rets = []
-
-        for xid in xids:
-            ret = {}
-            for arm in 'BRZ':
-                ret[arm.lower() + '_wavelength'] = waves[arm]
-                ret[arm.lower() + '_model'] = models[arm][xid, :]
-            rets.append(ret)
-        si.cache[url] = copy.copy(fp._cache)
-        return rets
+    return read_models(url, user, pwd, targetid, fiber)
