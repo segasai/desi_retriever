@@ -36,7 +36,7 @@ def get_specs(tileid=None,
               targetid=None,
               expid=None,
               coadd=True,
-              coadd_type='cumulative',
+              coadd_type='tiles/cumulative',
               dataset='daily',
               mask=False,
               ivar=False):
@@ -76,11 +76,11 @@ def get_specs(tileid=None,
             'Fiber must be specified as it is needed to identify the ' +
             'spectrograph')
     spectrograph = fiber // 500
-    if coadd_type == 'cumulative':
+    if coadd_type == 'tiles/cumulative':
         night1 = f'thru{night}'
     else:
         night1 = night
-    url = f'https://data.desi.lbl.gov/desi/spectro/redux/{dataset}/tiles/{coadd_type}/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night1}.fits'
+    url = f'https://data.desi.lbl.gov/desi/spectro/redux/{dataset}/{coadd_type}/{tileid}/{night}/{prefix}-{spectrograph}-{tileid}-{night1}.fits'
     user, pwd = get_desi_login_password()
     kw = dict(auth=(user, pwd), verify=False)
     block_size = 2880 * 10  # caching block
@@ -146,7 +146,7 @@ def get_rvspec_models(tileid=None,
                       targetid=None,
                       expid=None,
                       coadd=True,
-                      coadd_type='cumulative',
+                      coadd_type='tiles/cumulative',
                       run='210607',
                       dataset='daily'):
     """
@@ -182,7 +182,7 @@ def get_rvspec_models(tileid=None,
             'Fiber must be specified as it is needed to identify the ' +
             'spectrograph')
     spectrograph = fiber // 500
-    if coadd_type == 'cumulative':
+    if coadd_type == 'tiles/cumulative':
         night1 = f'thru{night}'
     else:
         night1 = night
