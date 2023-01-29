@@ -57,7 +57,6 @@ setup(
         'desi_retriever/denali',
         'desi_retriever/daily',
         'desi_retriever/fuji',
-        'desi_retriever/everest',
     ],
     #scripts = [fname for fname in glob.glob(os.path.join('bin', '*'))],
     package_dir={'': 'py'},
