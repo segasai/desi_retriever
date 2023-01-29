@@ -147,7 +147,7 @@ def get_rvspec_models(tileid=None,
                       expid=None,
                       coadd=True,
                       coadd_type='tiles/cumulative',
-                      run='210607',
+                      run='220309',
                       dataset='daily'):
     """
     Get RVSpecfit models
