@@ -3,7 +3,7 @@ import scipy.stats
 import numpy as np
 
 
-def plot(D, model=None, fig=None, percs=None):
+def plot(D, model=None, fig=None, percs=None, title=None):
     if fig is None:
         fig = plt.gcf()
         plt.clf()
@@ -16,6 +16,9 @@ def plot(D, model=None, fig=None, percs=None):
         axes[i].plot(D[filt + '_wavelength'],
                      D[filt + '_flux'],
                      color=colHash[filt])
+        if title is not None and i == 0:
+            axes[i].set_title(title)
+
     if model is not None:
         for i, filt in enumerate('brz'):
             axes[i].plot(model[filt + '_wavelength'],
