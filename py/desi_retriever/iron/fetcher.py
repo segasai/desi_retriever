@@ -61,7 +61,7 @@ def fetch_gaia_index():
         return
     D = pyfits.getdata(
         fsspec.open(
-            'https://data.desi.lbl.gov/desi/users/koposov/gaiaid_db/gaia-fuji-coadd-hpx-index.fits',
+            'https://data.desi.lbl.gov/desi/users/koposov/gaiaid_db/gaia-index-iron-coadd.fits',
             'rb',
             auth=aiohttp.BasicAuth(si.DESI_USER, si.DESI_PASSWD)).open())
     si.gaiaIndex = GaiaIndex(D['EDR3_SOURCE_ID'], D['TARGETID'], D['survey'],
