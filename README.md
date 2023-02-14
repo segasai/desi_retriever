@@ -8,8 +8,14 @@ To install just do
 
 `pip install https://github.com/segasai/desi_retriever/archive/master.zip`
 
-You also need to set-up the DESI user/password. You need to put the login password in the file 
-$HOME/.desi_http_user in the format login:password
+### Set up the DESI user / password
+
+You need to put in the standard DESI web login/password in the home folder in the file:
+$HOME/.desi_http_user
+in the following format
+login:password
+
+The login password are the same ones as used to access data.desi.lbl.gov 
 
 ## Usage
 
