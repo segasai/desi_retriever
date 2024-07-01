@@ -276,7 +276,7 @@ def get_rvspec_models(gaia_edr3_source_id=None,
                       subsurvey=None,
                       spec_type='coadd',
                       group_type='healpix',
-                      run='230620',
+                      run='240620',
                       dataset='jura'):
     """
     Get RVSpecfit models
