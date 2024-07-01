@@ -58,6 +58,7 @@ setup(
         'desi_retriever/daily',
         'desi_retriever/fuji',
         'desi_retriever/iron',
+        'desi_retriever/jura',
     ],
     #scripts = [fname for fname in glob.glob(os.path.join('bin', '*'))],
     package_dir={'': 'py'},
