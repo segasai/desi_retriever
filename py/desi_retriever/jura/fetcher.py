@@ -6,8 +6,10 @@ import astropy.io.fits as pyfits
 import urllib3
 import os
 from pylru import lrudecorator, lrucache
+import pyarrow.parquet as pq
 import fsspec
 import aiohttp
+import pickle
 
 urllib3.disable_warnings()
 
@@ -34,24 +36,29 @@ username:password
 
 class GaiaIndex:
 
-    def __init__(self, gaiaid, targetid, survey, subsurvey, hpx, row):
-        self.gaiaid = gaiaid
-        self.targetid = targetid
-        self.survey = survey
-        self.subsurvey = subsurvey
-        self.hpx = hpx
-        self.row = row
+    def __init__(self,
+                 key_arr,
+                 pos1,
+                 pos2,
+                 bin_url=None,
+                 auth=None,
+                 columns=None):
+        self.key_arr = key_arr
+        self.pos1 = pos1
+        self.pos2 = pos2
+        self.bin_url = bin_url
+        self.auth = auth
+        self.columns = columns
 
-    def search_id(self, gaiaid_new):
-        xid = np.searchsorted(self.gaiaid, gaiaid_new)
-        if xid >= len(self.gaiaid) or xid < 0:
+    def search_id(self, key_val):
+        xid = np.searchsorted(self.key_arr, key_val)
+        if xid >= len(self.key_arr) or xid < 0:
             return None
-        if self.gaiaid[xid] == gaiaid_new:
-            return dict(targetid=self.targetid[xid],
-                        survey=self.survey[xid],
-                        subsurvey=self.subsurvey[xid],
-                        hpx=self.hpx[xid],
-                        row=self.row[xid])
+        if self.key_arr[xid] == key_val:
+            with fsspec.open(self.bin_url, 'rb', auth=self.auth).open() as fp:
+                fp.seek(self.pos1[xid])
+                D = pickle.loads(fp.read(self.pos2[xid] - self.pos1[xid]))
+                return dict(zip(self.columns, D))
         else:
             return None
 
@@ -59,16 +66,40 @@ class GaiaIndex:
 def fetch_gaia_index():
     if si.gaiaIndex is not None:
         return
-    D = pyfits.getdata(
-        fsspec.open(
-            'https://data.desi.lbl.gov/desi/users/koposov/gaiaid_db/indexes/gaia-index-jura-coadd.fits',
-            'rb',
-            auth=aiohttp.BasicAuth(si.DESI_USER, si.DESI_PASSWD)).open())
-    si.gaiaIndex = GaiaIndex(D['EDR3_SOURCE_ID'], D['TARGETID'], D['survey'],
-                             D['subsurvey'], D['hpx'], D['row'])
+    kw = dict(auth=(si.DESI_USER, si.DESI_PASSWD), verify=False)
+    auth = aiohttp.BasicAuth(si.DESI_USER, si.DESI_PASSWD)
+
+    print('reading remote parquet file')
+    with httpio.open(
+            'https://data.desi.lbl.gov/desi/users/koposov/gaiaid_db/aa.parquet',
+            **kw) as fp:
+        pqf = pq.ParquetFile(fp).read()
+    bin_url = 'https://data.desi.lbl.gov/desi/users/koposov/gaiaid_db/aa.bin'
+    print('done')
+    with fsspec.open(bin_url, 'rb', auth=auth).open() as fp:
+        header = 1000
+        keys = pickle.loads(fp.read(header))
+
+    D = {}
+    for k in ['EDR3_SOURCE_ID', 'pos1', 'pos2']:
+        D[k] = np.array(pqf[k])
+    si.gaiaIndex = GaiaIndex(D['EDR3_SOURCE_ID'],
+                             D['pos1'],
+                             D['pos2'],
+                             bin_url=bin_url,
+                             columns=keys,
+                             auth=auth)
 
 
-def read_spectra(url, user, pwd, targetid, expid, fiber, mask, ivar):
+def read_spectra(url,
+                 user,
+                 pwd,
+                 targetid,
+                 expid,
+                 fiber,
+                 mask,
+                 ivar,
+                 fibermap=False):
     kw = dict(auth=(user, pwd), verify=False)
     block_size = 2880 * 10  # caching block
     with httpio.open(url, block_size=block_size, **kw) as fp:
@@ -107,10 +138,11 @@ def read_spectra(url, user, pwd, targetid, expid, fiber, mask, ivar):
         if ivar:
             for arm in 'BRZ':
                 ivars[arm] = hdus[arm + '_IVAR'].section
-
         rets = []
         for xid in xids:
             ret = {}
+            if fibermap:
+                ret['fibermap'] = ftab[xid]
             for arm in 'BRZ':
                 ret[arm.lower() + '_wavelength'] = waves[arm]
                 ret[arm.lower() + '_flux'] = fluxes[arm][xid, :]
@@ -182,13 +214,15 @@ def get_specs(gaia_edr3_source_id=None,
               dataset='jura',
               spec_type='coadd',
               survey=None,
+              program=None,
               subsurvey=None,
               spectrograph=None,
               mask=False,
-              ivar=False):
+              ivar=False,
+              fibermap=False):
     """
-    Get DESI spectra
-    
+    Get DESI spectra   
+
     Parameters
     ----------
     tileid: int
@@ -203,6 +237,8 @@ def get_specs(gaia_edr3_source_id=None,
          If true return the masks as well
     ivar: bool
          If true return the inverse variances
+    fibermap: bool
+         If true return the inverse fibermap
 
     Returns
     -------
@@ -219,7 +255,9 @@ def get_specs(gaia_edr3_source_id=None,
         raise Exception('unknown')
     if group_type not in ['exposure', 'healpix', 'tiles/cumulative', 'tiles']:
         raise Exception('unknown')
-
+    if subsurvey is not None:
+        print('Warning subsurvey is deprecated, use program keyword')
+        program = subsurvey
     if group_type != 'healpix':
         if fiber is None:
             raise Exception(
@@ -233,10 +271,10 @@ def get_specs(gaia_edr3_source_id=None,
         res = si.gaiaIndex.search_id(gaia_edr3_source_id)
         if res is None:
             raise ValueError('object not found')
-        survey = res['survey']
-        subsurvey = res['subsurvey']
+        survey = res['SURVEY']
+        program = res['PROGRAM']
         hpx = res['hpx']
-        targetid = res['targetid']
+        targetid = res['TARGETID']
 
     if group_type == 'tiles/cumulative':
         night1 = f'thru{night}'
@@ -253,14 +291,22 @@ def get_specs(gaia_edr3_source_id=None,
         url = (f'{data_desi}/spectro/redux/{dataset}/tiles/{tileid}/'
                f'{night}/{fname}')
     elif group_type == 'healpix':
-        fname = f'{spec_type}-{survey}-{subsurvey}-{hpx}.fits'
+        fname = f'{spec_type}-{survey}-{program}-{hpx}.fits'
         url = (f'{data_desi}/spectro/redux/{dataset}/healpix/{survey}/'
-               f'{subsurvey}/{hpx//100}/{hpx}/{fname}')
+               f'{program}/{hpx//100}/{hpx}/{fname}')
         print(url)
 
     else:
         raise Exception('oops')
-    return read_spectra(url, user, pwd, targetid, expid, fiber, mask, ivar)
+    return read_spectra(url,
+                        user,
+                        pwd,
+                        targetid,
+                        expid,
+                        fiber,
+                        mask,
+                        ivar,
+                        fibermap=fibermap)
 
 
 @lrudecorator(100)
@@ -274,6 +320,7 @@ def get_rvspec_models(gaia_edr3_source_id=None,
                       coadd=True,
                       survey=None,
                       subsurvey=None,
+                      program=None,
                       spec_type='coadd',
                       group_type='healpix',
                       run='240620',
@@ -301,16 +348,18 @@ def get_rvspec_models(gaia_edr3_source_id=None,
         has keywords b_wavelength, r_wavelength, z_wavelength
         b_model etc
     """
+    if subsurvey is not None:
+        print('WArning subsurvey keyword is deprecated, use program')
     user, pwd = get_desi_login_password()
     if gaia_edr3_source_id is not None:
         fetch_gaia_index()
         res = si.gaiaIndex.search_id(gaia_edr3_source_id)
         if res is None:
             raise ValueError('object not found')
-        survey = res['survey']
-        subsurvey = res['subsurvey']
+        survey = res['SURVEY']
+        program = res['PROGRAM']
         hpx = res['hpx']
-        targetid = res['targetid']
+        targetid = res['TARGETID']
     if spec_type not in ['coadd', 'cframe', 'spectra']:
         raise Exception('unknown')
     if group_type != 'healpix':
@@ -334,9 +383,9 @@ def get_rvspec_models(gaia_edr3_source_id=None,
         url = (f'{data_desi}/tiles/{tileid}/'
                f'{night}/{fname}')
     elif group_type == 'healpix':
-        fname = f'rvmod_{spec_type}-{survey}-{subsurvey}-{hpx}.fits'
+        fname = f'rvmod_{spec_type}-{survey}-{program}-{hpx}.fits'
         url = (f'{data_desi}/healpix/{survey}/'
-               f'{subsurvey}/{hpx//100}/{hpx}/{fname}')
+               f'{program}/{hpx//100}/{hpx}/{fname}')
         print(url)
 
     return read_models(url, user, pwd, targetid, fiber)
