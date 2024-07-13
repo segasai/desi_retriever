@@ -68,13 +68,12 @@ def fetch_gaia_index():
         return
     kw = dict(auth=(si.DESI_USER, si.DESI_PASSWD), verify=False)
     auth = aiohttp.BasicAuth(si.DESI_USER, si.DESI_PASSWD)
-
+    base_url = 'https://data.desi.lbl.gov/desi/users/koposov/gaiaid_db/indexes'
+    parquet_url = f'{base_url}/gaia-index-jura-coadd.parquet'
+    bin_url = f'{base_url}/gaia-index-jura-coadd.bin'
     print('reading remote parquet file')
-    with httpio.open(
-            'https://data.desi.lbl.gov/desi/users/koposov/gaiaid_db/aa.parquet',
-            **kw) as fp:
+    with httpio.open(parquet_url, **kw) as fp:
         pqf = pq.ParquetFile(fp).read()
-    bin_url = 'https://data.desi.lbl.gov/desi/users/koposov/gaiaid_db/aa.bin'
     print('done')
     with fsspec.open(bin_url, 'rb', auth=auth).open() as fp:
         header = 1000
@@ -221,7 +220,9 @@ def get_specs(gaia_edr3_source_id=None,
               ivar=False,
               fibermap=False):
     """
-    Get DESI spectra   
+    Get DESI spectra for a single object.
+    Typically if you are getting a coadded object, you
+    need to provide targetid, healpix, survey, program.
 
     Parameters
     ----------
