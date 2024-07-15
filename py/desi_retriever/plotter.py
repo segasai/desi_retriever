@@ -15,9 +15,7 @@ def plot(D, model=None, fig=None, percs=None, title=None):
     for i, filt in enumerate('brz'):
         spec = D[filt + '_flux'] * 1
         spec[spec == 0] = np.nan
-        axes[i].plot(D[filt + '_wavelength'],
-                     D[filt + '_flux'],
-                     color=colHash[filt])
+        axes[i].plot(D[filt + '_wavelength'], spec, color=colHash[filt])
         if title is not None and i == 0:
             axes[i].set_title(title)
 
