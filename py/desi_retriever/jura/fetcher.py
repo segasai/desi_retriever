@@ -86,13 +86,13 @@ def fetch_gaia_index():
                     with open(path_base_path + '/' + parquet_fname,
                               'wb') as fp_out:
                         fp_out.write(rp.content)
+                print('Successfully downloaded')
             except:  # noqa
                 print('''Failed to download the gaia index file
 You may want to update desi_retriever''')
                 traceback.print_exc()
             continue
 
-    print('Successfully downloaded')
     with fsspec.open(bin_url, 'rb', auth=auth).open() as fp:
         header = 1000
         keys = pickle.loads(fp.read(header))
