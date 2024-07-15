@@ -13,6 +13,8 @@ def plot(D, model=None, fig=None, percs=None, title=None):
     colHash = {'b': 'blue', 'r': 'green', 'z': 'red'}
     colHash1 = {'b': 'lightblue', 'r': 'lightgreen', 'z': 'orange'}
     for i, filt in enumerate('brz'):
+        spec = D[filt + '_flux'] * 1
+        spec[spec == 0] = np.nan
         axes[i].plot(D[filt + '_wavelength'],
                      D[filt + '_flux'],
                      color=colHash[filt])
