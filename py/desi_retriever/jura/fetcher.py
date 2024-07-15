@@ -10,6 +10,8 @@ import pyarrow.parquet as pq
 import fsspec
 import aiohttp
 import pickle
+import requests
+import traceback
 
 urllib3.disable_warnings()
 
@@ -66,15 +68,31 @@ class GaiaIndex:
 def fetch_gaia_index():
     if si.gaiaIndex is not None:
         return
-    kw = dict(auth=(si.DESI_USER, si.DESI_PASSWD), verify=False)
-    auth = aiohttp.BasicAuth(si.DESI_USER, si.DESI_PASSWD)
+    login, passwd = get_desi_login_password()
+    auth = aiohttp.BasicAuth(login, passwd)
     base_url = 'https://data.desi.lbl.gov/desi/users/koposov/gaiaid_db/indexes'
-    parquet_url = f'{base_url}/gaia-index-jura-coadd.parquet'
-    bin_url = f'{base_url}/gaia-index-jura-coadd.bin'
-    print('reading remote parquet file')
-    with httpio.open(parquet_url, **kw) as fp:
-        pqf = pq.ParquetFile(fp).read()
-    print('done')
+    path_base_path = os.path.dirname(os.path.abspath(__file__))
+    parquet_fname = 'gaia-index-jura-coadd_240715.parquet'
+    parquet_url = f'{base_url}/' + parquet_fname
+    bin_url = f'{base_url}/gaia-index-jura-coadd_240715.bin'
+    for i in range(2):
+        try:
+            with open(path_base_path + '/' + parquet_fname, 'rb') as fp:
+                pqf = pq.ParquetFile(fp).read()
+        except:  # noqa
+            print('Downloading remote parquet file')
+            try:
+                with requests.get(parquet_url, auth=(login, passwd)) as rp:
+                    with open(path_base_path + '/' + parquet_fname,
+                              'wb') as fp_out:
+                        fp_out.write(rp.content)
+            except:  # noqa
+                print('''Failed to download the gaia index file
+You may want to update desi_retriever''')
+                traceback.print_exc()
+            continue
+
+    print('Successfully downloaded')
     with fsspec.open(bin_url, 'rb', auth=auth).open() as fp:
         header = 1000
         keys = pickle.loads(fp.read(header))
