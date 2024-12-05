@@ -72,9 +72,9 @@ def fetch_gaia_index():
     auth = aiohttp.BasicAuth(login, passwd)
     base_url = 'https://data.desi.lbl.gov/desi/users/koposov/gaiaid_db/indexes'
     path_base_path = os.path.dirname(os.path.abspath(__file__))
-    parquet_fname = 'gaia-index-loa-coadd_240715.parquet'
+    parquet_fname = 'gaia-index-loa-coadd_241127.parquet'
     parquet_url = f'{base_url}/' + parquet_fname
-    bin_url = f'{base_url}/gaia-index-loa-coadd_240715.bin'
+    bin_url = f'{base_url}/gaia-index-loa-coadd_241127.bin'
     for i in range(2):
         try:
             with open(path_base_path + '/' + parquet_fname, 'rb') as fp:
