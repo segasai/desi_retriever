@@ -21,8 +21,10 @@ def plot(D, model=None, fig=None, percs=None, title=None):
 
     if model is not None:
         for i, filt in enumerate('brz'):
+            spec = model[filt + '_model'] * 1
+            spec[spec == 0] = np.nan
             axes[i].plot(model[filt + '_wavelength'],
-                         model[filt + '_model'],
+                         spec,
                          color=colHash1[filt],
                          alpha=0.5)
     if percs is not None:
