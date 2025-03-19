@@ -60,6 +60,7 @@ setup(
         'desi_retriever/iron',
         'desi_retriever/jura',
         'desi_retriever/loa',
+        'desi_retriever/dr1',
     ],
     #scripts = [fname for fname in glob.glob(os.path.join('bin', '*'))],
     package_dir={'': 'py'},
