@@ -2,9 +2,10 @@
 
 This is a tool that allows you to fetch desi spectra without manually downloading them.
 
-You may also consider using 'SPARCL' instead
+You may also consider using SPARCL 
 https://astrosparcl.datalab.noirlab.edu/
-for another interface
+for another interface.
+
 
 ## Installation
 
@@ -27,13 +28,14 @@ The login password are the same ones as used to access data.desi.lbl.gov
 ## Usage
 
 Then to fetch a given spectrum from coadd you can do 
- 
-`
+
+```
 import desi_retriever.dr1
 SP = desi_retriever.dr1.get_specs(survey='sv1',
                program='dark',
                hpx=17683,
-               targetid=39627652591521181)[0]`
+               targetid=39627652591521181)[0]
+```
 
 You could also get the RVSpecFit models by using 
 
@@ -42,4 +44,6 @@ You could also get the RVSpecFit models by using
                hpx=17683,
                targetid=39627652591521181)[0]`
 
-More examples are in jupyter notebooks in example folder
+More examples are in jupyter notebooks in example folder.
+
+
