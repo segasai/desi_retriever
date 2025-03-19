@@ -2,11 +2,11 @@
 
 This is a tool that allows you to fetch desi spectra without manually downloading them.
 
-Author: Sergey Koposov skoposov AT ed DOT ac _DOT uk, University of Edinburgh
-
 You may also consider using SPARCL 
 https://astrosparcl.datalab.noirlab.edu/
 for another interface.
+
+Author: Sergey Koposov, Email: skoposov AT ed DOT ac _DOT uk, University of Edinburgh
 
 
 ## Installation
