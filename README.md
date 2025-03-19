@@ -6,6 +6,8 @@ You may also consider using SPARCL
 https://astrosparcl.datalab.noirlab.edu/
 for another interface.
 
+Author: Sergey Koposov, Email: skoposov AT ed DOT ac _DOT uk, University of Edinburgh
+
 
 ## Installation
 
