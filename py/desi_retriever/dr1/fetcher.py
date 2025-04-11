@@ -85,7 +85,13 @@ You may want to update desi_retriever''')
                              columns=keys)
 
 
-def read_spectra(url, targetid, expid, fiber, mask, ivar, fibermap=False):
+def read_spectra(url,
+                 targetid,
+                 fiber,
+                 expid=None,
+                 mask=False,
+                 ivar=False,
+                 fibermap=False):
     kw = dict(verify=False)
     block_size = 2880 * 10  # caching block
     with httpio.open(url, block_size=block_size, **kw) as fp:
@@ -104,7 +110,7 @@ def read_spectra(url, targetid, expid, fiber, mask, ivar, fibermap=False):
         else:
             xids = np.nonzero((ftab['FIBER'] == fiber) & xind)[0]
         if len(xids) == 0:
-            print('no spectra')
+            print('Warning no spectra was found with provided info')
             return []
 
         waves = {}
@@ -290,10 +296,10 @@ def get_specs(gaia_edr3_source_id=None,
         raise Exception('oops')
     return read_spectra(url,
                         targetid,
-                        expid,
                         fiber,
-                        mask,
-                        ivar,
+                        expid=expid,
+                        mask=mask,
+                        ivar=ivar,
                         fibermap=fibermap)
 
 
