@@ -11,6 +11,7 @@ import fsspec
 import pickle
 import requests
 import traceback
+from ..utils import read_spectra, read_models
 
 urllib3.disable_warnings()
 
@@ -83,115 +84,6 @@ You may want to update desi_retriever''')
                              D['pos2'],
                              bin_url=bin_url,
                              columns=keys)
-
-
-def read_spectra(url,
-                 targetid,
-                 fiber,
-                 expid=None,
-                 mask=False,
-                 ivar=False,
-                 fibermap=False):
-    kw = dict(verify=False)
-    block_size = 2880 * 10  # caching block
-    with httpio.open(url, block_size=block_size, **kw) as fp:
-        if url in si.cache:
-            fp._cache = si.cache[url]
-        hdus = pyfits.open(fp)
-
-        ftab = atpy.Table(hdus['FIBERMAP'].data)
-
-        if expid is not None:
-            xind = ftab['EXPID'] == expid
-        else:
-            xind = np.ones(len(ftab), dtype=bool)
-        if targetid is not None:
-            xids = np.nonzero((ftab['TARGETID'] == targetid) & xind)[0]
-        else:
-            xids = np.nonzero((ftab['FIBER'] == fiber) & xind)[0]
-        if len(xids) == 0:
-            print('Warning no spectra was found with provided info')
-            return []
-
-        waves = {}
-        for arm in 'BRZ':
-            waves[arm] = hdus[arm + '_WAVELENGTH'].data
-
-        fluxes = {}
-        for arm in 'BRZ':
-            fluxes[arm] = hdus[arm + '_FLUX'].section
-
-        masks = {}
-        if mask:
-            for arm in 'BRZ':
-                masks[arm] = hdus[arm + '_MASK'].section
-
-        ivars = {}
-        if ivar:
-            for arm in 'BRZ':
-                ivars[arm] = hdus[arm + '_IVAR'].section
-        rets = []
-        for xid in xids:
-            ret = {}
-            if fibermap:
-                ret['fibermap'] = ftab[xid]
-            for arm in 'BRZ':
-                ret[arm.lower() + '_wavelength'] = waves[arm]
-                ret[arm.lower() + '_flux'] = fluxes[arm][xid, :]
-            if mask:
-                for arm in 'BRZ':
-                    ret[arm.lower() + '_mask'] = masks[arm][xid, :]
-            if ivar:
-                for arm in 'BRZ':
-                    ret[arm.lower() + '_ivar'] = ivars[arm][xid, :]
-
-            rets.append(ret)
-        si.cache[url] = copy.copy(fp._cache)
-        return rets
-
-
-def read_models(url, targetid, fiber, expid=None):
-
-    block_size = 2880 * 10  # caching block
-    kw = dict(verify=False)
-
-    with httpio.open(url, block_size=block_size, **kw) as fp:
-        if url in si.cache:
-            fp._cache = si.cache[url]
-        hdus = pyfits.open(fp)
-        ftab = atpy.Table(hdus['FIBERMAP'].data)
-
-        if expid is not None:
-            xind = ftab['EXPID'] == expid
-        else:
-            xind = np.ones(len(ftab), dtype=bool)
-        if targetid is not None:
-            xids = np.nonzero((ftab['TARGETID'] == targetid) & xind)[0]
-        else:
-            xids = np.nonzero((ftab['FIBER'] == fiber) & xind)[0]
-
-        if len(xids) == 0:
-            print('no spectra')
-            return []
-
-        waves = {}
-        for arm in 'BRZ':
-            waves[arm] = hdus[arm + '_WAVELENGTH'].data
-
-        models = {}
-        for arm in 'BRZ':
-            models[arm] = hdus[arm + '_MODEL'].section
-
-        rets = []
-
-        for xid in xids:
-            ret = {}
-            for arm in 'BRZ':
-                ret[arm.lower() + '_wavelength'] = waves[arm]
-                ret[arm.lower() + '_model'] = models[arm][xid, :]
-            rets.append(ret)
-        si.cache[url] = copy.copy(fp._cache)
-        return rets
 
 
 @lrudecorator(100)
@@ -296,7 +188,7 @@ def get_specs(gaia_edr3_source_id=None,
         raise Exception('oops')
     return read_spectra(url,
                         targetid,
-                        fiber,
+                        fiber=fiber,
                         expid=expid,
                         mask=mask,
                         ivar=ivar,
@@ -378,4 +270,4 @@ def get_rvspec_models(gaia_edr3_source_id=None,
                f'{program}/{hpx//100}/{hpx}/{fname}')
         print(url)
 
-    return read_models(url, targetid, fiber)
+    return read_models(url, targetid, fiber=fiber)
