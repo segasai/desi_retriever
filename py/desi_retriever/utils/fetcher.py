@@ -86,7 +86,8 @@ def read_spectra(url,
                     ret[arm.lower() + '_ivar'] = ivars[arm][xid, :]
 
             rets.append(ret)
-        si.cache[url] = copy.copy(fp._cache)
+        if not local_mode:
+            si.cache[url] = copy.copy(fp._cache)
         return rets
 
 
@@ -134,5 +135,6 @@ def read_models(url, targetid, fiber=None, expid=None, user=None, pwd=None):
                 ret[arm.lower() + '_wavelength'] = waves[arm]
                 ret[arm.lower() + '_model'] = models[arm][xid, :]
             rets.append(ret)
-        si.cache[url] = copy.copy(fp._cache)
+        if not local_mode:
+            si.cache[url] = copy.copy(fp._cache)
         return rets
