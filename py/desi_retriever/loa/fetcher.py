@@ -141,6 +141,22 @@ def get_specs(gaia_edr3_source_id=None,
     fiber: int
     targetid: int (optional)
     expid: int (optional)
+        nersc: bool
+         If true we assume we are running on NERSC and we fetch local file 
+    group_type: str
+        The group type (healpix or tiles/cumulative)
+    program: str
+        The program name (i.e. backup/bright/dark)
+    survey: string
+        The name of the survey (i.e. main/sv1 etc)
+    gaia_edr3_source_id: int
+         The gaia edr3 source id
+    hpx: int
+        The healpix id
+    spec_type: str
+        The type of the spectra (i.e. coadd/cframe/spectra)
+    dataset: str
+        The dataset (i.e. loa/daily)
     coadd: bool
          If true read coadded spectra
     mask: bool
@@ -244,13 +260,26 @@ def get_rvspec_models(gaia_edr3_source_id=None,
 
     Parameters
     ----------
+    gaia_edr3_source_id: int
+         The gaia edr3 source id
+
     tileid: int
     night: int
     fiber: int
     targetid: int
+    hpx: int
+        The healpix id
+    group_type: str
+        The group type (healpix or tiles/cumulative)
+    program: str
+        The program name (i.e. backup/bright/dark)
     expid: int (optional)
     coadd: bool
          If true read coadded spectra
+    model_type: str
+         The model type (i.e. rvmod or rvjmod)
+    nersc: bool
+         If true we assume we are running on NERSC and we fetch local file 
     run: string
          The string identifying a software run
     dataset: the dataset fitted (i.e. andes/sv_daily)

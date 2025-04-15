@@ -27,6 +27,46 @@ def read_spectra(url,
                  fibermap=False,
                  user=None,
                  pwd=None):
+    """
+    Read the spectra from the given url
+    Parameters
+    ----------
+    url: str
+        The url to the file (or file path)
+    targetid: int
+        The targetid of the object
+    fiber: int
+        The fiber number (optional)
+    expid: int
+        The exposure id (optional)
+    mask: bool
+        Whether to read the mask (optional)
+    ivar: bool
+        Whether to read the inverse variance (optional)
+    fibermap: bool
+        Whether to read the fibermap (optional)
+    user: str
+        The username for authentication (optional)
+    pwd: str
+        The password for authentication (optional)
+    Returns
+    -------
+    Returns a list of dictionaries with the following keys:
+        - fibermap: the fibermap of the object
+        - b_wavelength: the wavelength of the blue arm
+        - b_flux: the flux of the blue arm 
+        - b_mask: the mask of the blue arm (optional)
+        - b_ivar: the inverse variance of the blue arm (optional)
+        - r_wavelength: the wavelength of the red arm
+        - r_flux: the flux of the red arm
+        - r_mask: the mask of the red arm (optional)
+        - r_ivar: the inverse variance of the red arm (optional)
+        - z_wavelength: the wavelength of the z arm
+        - z_flux: the flux of the z arm
+        - z_mask: the mask of the z arm (optional)
+        - z_ivar: the inverse variance of the z arm (optional)  
+    If there is only one object, the list will have only one element.
+        """
     kw = dict(verify=False)
     if user is not None:
         kw['auth'] = (user, pwd)
@@ -92,7 +132,24 @@ def read_spectra(url,
 
 
 def read_models(url, targetid, fiber=None, expid=None, user=None, pwd=None):
-
+    """
+    Read the models from the given url
+    
+    Parameters
+    ----------
+    url: str
+        The url to the file
+    targetid: int
+        The targetid of the object
+    fiber: int
+        The fiber number (optional)
+    expid: int
+        The exposure id (optional)
+    user: str
+        The username for authentication (optional)
+    pwd: str
+        The password for authentication (optional)
+    """
     kw = dict(verify=False)
     kw['block_size'] = 2880 * 10  # caching block
     if user is not None:
