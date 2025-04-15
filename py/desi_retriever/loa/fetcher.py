@@ -343,6 +343,7 @@ def get_rvspec_models(gaia_edr3_source_id=None,
                       spec_type='coadd',
                       group_type='healpix',
                       run='241119',
+                      model_type='rvmod',
                       dataset='loa'):
     """
     Get RVSpecfit models
@@ -395,14 +396,14 @@ def get_rvspec_models(gaia_edr3_source_id=None,
     data_desi = (f'https://data.desi.lbl.gov/desi/science/mws/redux/'
                  f'{dataset}/rv_output/{run}/')
     if group_type == 'tiles/cumulative':
-        fname = f'rvmod_`{spec_type}-{spectrograph}-{tileid}-{night1}.fits'
+        fname = f'{model_type}_`{spec_type}-{spectrograph}-{tileid}-{night1}.fits'
         url = (f'{data_desi}/tiles/cumulative/' + f'{tileid}/{night}/{fname}')
     elif group_type == 'tiles':
-        fname = f'rvmod_{spec_type}-{spectrograph}-{tileid}-{night1}.fits'
+        fname = f'{model_type}_{spec_type}-{spectrograph}-{tileid}-{night1}.fits'
         url = (f'{data_desi}/tiles/{tileid}/'
                f'{night}/{fname}')
     elif group_type == 'healpix':
-        fname = f'rvmod_{spec_type}-{survey}-{program}-{hpx}.fits'
+        fname = f'{model_type}_{spec_type}-{survey}-{program}-{hpx}.fits'
         url = (f'{data_desi}/healpix/{survey}/'
                f'{program}/{hpx//100}/{hpx}/{fname}')
         print(url)
