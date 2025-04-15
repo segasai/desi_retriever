@@ -28,7 +28,7 @@ def read_spectra(url,
                  user=None,
                  pwd=None):
     kw = dict(verify=False)
-    if user is None:
+    if user is not None:
         kw['auth'] = (user, pwd)
     kw['block_size'] = 2880 * 10  # caching block
     local_mode = False
@@ -94,7 +94,7 @@ def read_models(url, targetid, fiber=None, expid=None, user=None, pwd=None):
 
     kw = dict(verify=False)
     kw['block_size'] = 2880 * 10  # caching block
-    if user is None:
+    if user is not None:
         kw['auth'] = (user, pwd)
     local_mode = False
     if url[0] == '/':
