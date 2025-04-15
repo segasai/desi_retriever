@@ -126,7 +126,8 @@ def get_specs(gaia_edr3_source_id=None,
               spectrograph=None,
               mask=False,
               ivar=False,
-              fibermap=False):
+              fibermap=False,
+              nersc=False):
     """
     Get DESI spectra for a single object.
     Typically if you are getting a coadded object, you
@@ -189,8 +190,10 @@ def get_specs(gaia_edr3_source_id=None,
         night1 = f'thru{night}'
     else:
         night1 = night
-
-    data_desi = 'https://data.desi.lbl.gov/desi/'
+    if nersc:
+        data_desi = '/global/cfs/cdirs/desi/'
+    else:
+        data_desi = 'https://data.desi.lbl.gov/desi/'
     if group_type == 'tiles/cumulative':
         fname = f'{spec_type}-{spectrograph}-{tileid}-{night1}.fits'
         url = (f'{data_desi}/spectro/redux/{dataset}/tiles/cumulative/' +
@@ -234,7 +237,8 @@ def get_rvspec_models(gaia_edr3_source_id=None,
                       group_type='healpix',
                       run='241119',
                       model_type='rvmod',
-                      dataset='loa'):
+                      dataset='loa',
+                      nersc=False):
     """
     Get RVSpecfit models
 
@@ -259,7 +263,7 @@ def get_rvspec_models(gaia_edr3_source_id=None,
         b_model etc
     """
     if subsurvey is not None:
-        print('WArning subsurvey keyword is deprecated, use program')
+        print('Warning subsurvey keyword is deprecated, use program')
     user, pwd = get_desi_login_password()
     if gaia_edr3_source_id is not None:
         fetch_gaia_index()
@@ -283,8 +287,12 @@ def get_rvspec_models(gaia_edr3_source_id=None,
     else:
         night1 = night
 
-    data_desi = (f'https://data.desi.lbl.gov/desi/science/mws/redux/'
-                 f'{dataset}/rv_output/{run}/')
+    if nersc:
+        data_desi = '/global/cfs/cdirs/desi/'
+    else:
+        data_desi = 'https://data.desi.lbl.gov/desi/'
+
+    data_desi = data_desi + f'science/mws/redux/{dataset}/rv_output/{run}/'
     if group_type == 'tiles/cumulative':
         fname = f'{model_type}_`{spec_type}-{spectrograph}-{tileid}-{night1}.fits'
         url = (f'{data_desi}/tiles/cumulative/' + f'{tileid}/{night}/{fname}')
