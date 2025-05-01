@@ -210,23 +210,25 @@ def get_specs(gaia_edr3_source_id=None,
         data_desi = '/global/cfs/cdirs/desi/'
     else:
         data_desi = 'https://data.desi.lbl.gov/desi/'
+    if spec_type == 'spectra':
+        fname_end = '.fits.gz'
+    else:
+        fname_end = '.fits'
     if group_type == 'tiles/cumulative':
-        fname = f'{spec_type}-{spectrograph}-{tileid}-{night1}.fits'
+        fname = f'{spec_type}-{spectrograph}-{tileid}-{night1}{fname_end}'
         url = (f'{data_desi}/spectro/redux/{dataset}/tiles/cumulative/' +
                f'{tileid}/{night}/{fname}')
     elif group_type == 'tiles':
-        fname = f'{spec_type}-{spectrograph}-{tileid}-{night1}.fits'
+        fname = f'{spec_type}-{spectrograph}-{tileid}-{night1}{fname_end}'
         url = (f'{data_desi}/spectro/redux/{dataset}/tiles/{tileid}/'
                f'{night}/{fname}')
     elif group_type == 'healpix':
-        fname = f'{spec_type}-{survey}-{program}-{hpx}.fits'
+        fname = f'{spec_type}-{survey}-{program}-{hpx}{fname_end}'
         url = (f'{data_desi}/spectro/redux/{dataset}/healpix/{survey}/'
                f'{program}/{hpx//100}/{hpx}/{fname}')
         print(url)
     else:
         raise Exception('oops')
-    if spec_type == 'spectra':
-        fname = fname + '.gz'
     return read_spectra(url,
                         targetid,
                         fiber=fiber,
