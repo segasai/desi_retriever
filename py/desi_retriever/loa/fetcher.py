@@ -223,9 +223,10 @@ def get_specs(gaia_edr3_source_id=None,
         url = (f'{data_desi}/spectro/redux/{dataset}/healpix/{survey}/'
                f'{program}/{hpx//100}/{hpx}/{fname}')
         print(url)
-
     else:
         raise Exception('oops')
+    if spec_type == 'spectra':
+        fname = fname + '.gz'
     return read_spectra(url,
                         targetid,
                         fiber=fiber,
