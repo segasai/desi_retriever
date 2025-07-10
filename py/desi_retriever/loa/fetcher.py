@@ -76,7 +76,10 @@ def get_specs(gaia_edr3_source_id=None,
         b_flux, b_mask, b_ivar
 
     """
-    user, pwd = get_desi_login_password()
+    if nersc:
+        user, pwd = None, None
+    else:
+        user, pwd = get_desi_login_password()
 
     if spec_type not in ['coadd', 'cframe', 'spectra']:
         raise Exception('unknown')
@@ -201,7 +204,10 @@ def get_rvspec_models(gaia_edr3_source_id=None,
     """
     if subsurvey is not None:
         print('Warning subsurvey keyword is deprecated, use program')
-    user, pwd = get_desi_login_password()
+    if nersc:
+        user, pwd = None, None
+    else:
+        user, pwd = get_desi_login_password()
     if gaia_edr3_source_id is not None:
         gaia_index = get_gaia_index(GAIA_PARQUET_FNAME,
                                     GAIA_BIN_FNAME,
