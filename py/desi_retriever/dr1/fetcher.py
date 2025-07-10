@@ -1,8 +1,4 @@
-import astropy.table as atpy
-import copy
-import httpio
 import numpy as np
-import astropy.io.fits as pyfits
 import urllib3
 import os
 from pylru import lrudecorator, lrucache
