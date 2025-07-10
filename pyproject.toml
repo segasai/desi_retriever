@@ -1,0 +1,56 @@
+# This is the pyproject.toml file for the desi_retriever project.
+# It replaces the need for a setup.py file and uses modern Python packaging standards.
+
+[build-system]
+# These are the build-time dependencies.
+# setuptools is the build backend, and setuptools-scm is used for automatic versioning from git tags.
+requires = ["setuptools>=61.0", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# Core project metadata, equivalent to the arguments in the setup() function.
+name = "desi_retriever"
+description = "Fetch DESI spectra of individual objects by tile/night/fiber"
+readme = "README.md"
+authors = [
+    { name = "Sergey Koposov", email = "skoposov@ed.ac.uk" },
+]
+license = { text = "BSD" }
+keywords = ["DESI", "spectrum"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Topic :: Utilities",
+    "License :: OSI Approved :: BSD License",
+]
+
+# The version is generated dynamically by setuptools-scm.
+dynamic = ["version"]
+
+# Dependencies should be listed here.
+# This replaces reading from requirements.txt.
+# You should copy the contents of your requirements.txt file here as a list of strings.
+# For example: dependencies = ["numpy", "astropy>=5.0"]
+dependencies = [
+    # Add your dependencies from requirements.txt here
+]
+
+[project.urls]
+# Project-related URLs.
+Homepage = "https://github.com/segasai/desi_retriever"
+
+[tool.setuptools]
+# This section contains setuptools-specific configuration.
+# This tells setuptools that your packages are located in the 'py' directory.
+package-dir = {"" = "py"}
+
+[tool.setuptools.packages.find]
+# This configures automatic package discovery.
+# It will find all packages inside the 'py' directory.
+where = ["py"]
+
+[tool.setuptools_scm]
+# This section configures setuptools-scm.
+# It will automatically generate the version number from git tags and commits.
+# The generated version will be written to this file, making it available at runtime.
+# This replaces your custom get_revision() function and version file logic.
+write_to = "py/desi_retriever/_version.py"
