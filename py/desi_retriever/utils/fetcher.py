@@ -247,12 +247,13 @@ class GaiaIndex:
 def get_gaia_index(parquet_fname, bin_fname, cache_dir=None, nersc=False):
     if si.gaiaIndex is not None:
         return si.gaiaIndex
-    login, passwd = get_desi_login_password()
     path0 = '/desi/users/koposov/gaiaid_db/indexes/'
     if nersc:
+        login, passwd = None, None
         auth = None
         base_url = f'/global/cfs/cdirs/{path0}'
     else:
+        login, passwd = get_desi_login_password()
         auth = aiohttp.BasicAuth(login, passwd)
         base_url = f'https://data.desi.lbl.gov/{path0}'
     if cache_dir is None:
