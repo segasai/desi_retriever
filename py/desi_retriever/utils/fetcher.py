@@ -5,17 +5,35 @@ import numpy as np
 import astropy.io.fits as pyfits
 import urllib3
 import os
-from pylru import lrudecorator, lrucache
+from pylru import lrucache
 import pyarrow.parquet as pq
 import fsspec
 import pickle
+import traceback
 import requests
+import aiohttp
 
 urllib3.disable_warnings()
 
 
 class si:
+    DESI_USER = None
+    DESI_PASSWD = None
     cache = lrucache(100)
+    gaiaIndex = None
+
+
+def get_desi_login_password():
+    if si.DESI_USER is None:
+        config = os.environ['HOME'] + '/.desi_http_user'
+        if not os.path.exists(config):
+            raise Exception('''You need to specify the DESI_USER/DESI_PASSWD.
+put them in $HOME/.desi_http_user like that
+username:password
+''')
+        user, pwd = open(config).read().rstrip().split(':')
+        si.DESI_USER, si.DESI_PASSWD = user, pwd
+    return si.DESI_USER, si.DESI_PASSWD
 
 
 def read_spectra(url,
@@ -54,7 +72,7 @@ def read_spectra(url,
     Returns a list of dictionaries with the following keys:
         - fibermap: the fibermap of the object
         - b_wavelength: the wavelength of the blue arm
-        - b_flux: the flux of the blue arm 
+        - b_flux: the flux of the blue arm
         - b_mask: the mask of the blue arm (optional)
         - b_ivar: the inverse variance of the blue arm (optional)
         - r_wavelength: the wavelength of the red arm
@@ -64,7 +82,7 @@ def read_spectra(url,
         - z_wavelength: the wavelength of the z arm
         - z_flux: the flux of the z arm
         - z_mask: the mask of the z arm (optional)
-        - z_ivar: the inverse variance of the z arm (optional)  
+        - z_ivar: the inverse variance of the z arm (optional)
     If there is only one object, the list will have only one element.
         """
     kw = dict(verify=False)
@@ -134,7 +152,7 @@ def read_spectra(url,
 def read_models(url, targetid, fiber=None, expid=None, user=None, pwd=None):
     """
     Read the models from the given url
-    
+
     Parameters
     ----------
     url: str
@@ -195,3 +213,85 @@ def read_models(url, targetid, fiber=None, expid=None, user=None, pwd=None):
         if not local_mode:
             si.cache[url] = copy.copy(fp._cache)
         return rets
+
+
+class GaiaIndex:
+
+    def __init__(self,
+                 key_arr,
+                 pos1,
+                 pos2,
+                 bin_url=None,
+                 auth=None,
+                 columns=None):
+        self.key_arr = key_arr
+        self.pos1 = pos1
+        self.pos2 = pos2
+        self.bin_url = bin_url
+        self.auth = auth
+        self.columns = columns
+
+    def search_id(self, key_val):
+        xid = np.searchsorted(self.key_arr, key_val)
+        if xid >= len(self.key_arr) or xid < 0:
+            return None
+        if self.key_arr[xid] == key_val:
+            with fsspec.open(self.bin_url, 'rb', auth=self.auth).open() as fp:
+                fp.seek(self.pos1[xid])
+                D = pickle.loads(fp.read(self.pos2[xid] - self.pos1[xid]))
+                return dict(zip(self.columns, D))
+        else:
+            return None
+
+
+def get_gaia_index(parquet_fname, bin_fname, cache_dir=None, nersc=False):
+    if si.gaiaIndex is not None:
+        return si.gaiaIndex
+    login, passwd = get_desi_login_password()
+    path0 = '/desi/users/koposov/gaiaid_db/indexes/'
+    if nersc:
+        auth = None
+        base_url = f'/global/cfs/cdirs/{path0}'
+    else:
+        auth = aiohttp.BasicAuth(login, passwd)
+        base_url = f'https://data.desi.lbl.gov/{path0}'
+    if cache_dir is None:
+        cache_dir = os.path.dirname(os.path.abspath(__file__))
+    local_parquet_fname = cache_dir + '/' + parquet_fname
+    parquet_url = f'{base_url}/' + parquet_fname
+    bin_url = f'{base_url}/{bin_fname}'
+    for i in range(2):
+        try:
+            with open(local_parquet_fname, 'rb') as fp:
+                pqf = pq.ParquetFile(fp).read()
+        except:  # noqa
+            print('Downloading remote parquet file')
+            try:
+                with open(local_parquet_fname, 'wb') as fp_out:
+                    if nersc:
+                        fp_out.write(open(parquet_url, 'rb').read())
+                    else:
+                        with requests.get(parquet_url,
+                                          auth=(login, passwd)) as rp:
+                            fp_out.write(rp.content)
+                            print('Successfully downloaded')
+            except:  # noqa
+                print('''Failed to download the gaia index file
+You may want to update desi_retriever''')
+                traceback.print_exc()
+            continue
+
+    with fsspec.open(bin_url, 'rb', auth=auth).open() as fp:
+        header = 1000
+        keys = pickle.loads(fp.read(header))
+
+    D = {}
+    for k in ['EDR3_SOURCE_ID', 'pos1', 'pos2']:
+        D[k] = np.array(pqf[k])
+    si.gaiaIndex = GaiaIndex(D['EDR3_SOURCE_ID'],
+                             D['pos1'],
+                             D['pos2'],
+                             bin_url=bin_url,
+                             columns=keys,
+                             auth=auth)
+    return si.gaiaIndex

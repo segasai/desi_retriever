@@ -1,108 +1,13 @@
-import numpy as np
 import urllib3
 import os
-from pylru import lrudecorator, lrucache
-import pyarrow.parquet as pq
-import fsspec
-import aiohttp
-import pickle
-import requests
-import traceback
-from ..utils import read_spectra, read_models
+from pylru import lrudecorator
+from ..utils import (read_spectra, read_models, get_gaia_index,
+                     get_desi_login_password)
 
 urllib3.disable_warnings()
 
-
-class si:
-    DESI_USER = None
-    DESI_PASSWD = None
-    cache = lrucache(100)
-    gaiaIndex = None
-
-
-def get_desi_login_password():
-    if si.DESI_USER is None:
-        config = os.environ['HOME'] + '/.desi_http_user'
-        if not os.path.exists(config):
-            raise Exception('''You need to specify the DESI_USER/DESI_PASSWD.
-put them in $HOME/.desi_http_user like that
-username:password
-''')
-        user, pwd = open(config).read().rstrip().split(':')
-        si.DESI_USER, si.DESI_PASSWD = user, pwd
-    return si.DESI_USER, si.DESI_PASSWD
-
-
-class GaiaIndex:
-
-    def __init__(self,
-                 key_arr,
-                 pos1,
-                 pos2,
-                 bin_url=None,
-                 auth=None,
-                 columns=None):
-        self.key_arr = key_arr
-        self.pos1 = pos1
-        self.pos2 = pos2
-        self.bin_url = bin_url
-        self.auth = auth
-        self.columns = columns
-
-    def search_id(self, key_val):
-        xid = np.searchsorted(self.key_arr, key_val)
-        if xid >= len(self.key_arr) or xid < 0:
-            return None
-        if self.key_arr[xid] == key_val:
-            with fsspec.open(self.bin_url, 'rb', auth=self.auth).open() as fp:
-                fp.seek(self.pos1[xid])
-                D = pickle.loads(fp.read(self.pos2[xid] - self.pos1[xid]))
-                return dict(zip(self.columns, D))
-        else:
-            return None
-
-
-def fetch_gaia_index():
-    if si.gaiaIndex is not None:
-        return
-    login, passwd = get_desi_login_password()
-    auth = aiohttp.BasicAuth(login, passwd)
-    base_url = 'https://data.desi.lbl.gov/desi/users/koposov/gaiaid_db/indexes'
-    path_base_path = os.path.dirname(os.path.abspath(__file__))
-    parquet_fname = 'gaia-index-loa-coadd_241127.parquet'
-    parquet_url = f'{base_url}/' + parquet_fname
-    bin_url = f'{base_url}/gaia-index-loa-coadd_241127.bin'
-    for i in range(2):
-        try:
-            with open(path_base_path + '/' + parquet_fname, 'rb') as fp:
-                pqf = pq.ParquetFile(fp).read()
-        except:  # noqa
-            print('Downloading remote parquet file')
-            try:
-                with requests.get(parquet_url, auth=(login, passwd)) as rp:
-                    with open(path_base_path + '/' + parquet_fname,
-                              'wb') as fp_out:
-                        fp_out.write(rp.content)
-                print('Successfully downloaded')
-            except:  # noqa
-                print('''Failed to download the gaia index file
-You may want to update desi_retriever''')
-                traceback.print_exc()
-            continue
-
-    with fsspec.open(bin_url, 'rb', auth=auth).open() as fp:
-        header = 1000
-        keys = pickle.loads(fp.read(header))
-
-    D = {}
-    for k in ['EDR3_SOURCE_ID', 'pos1', 'pos2']:
-        D[k] = np.array(pqf[k])
-    si.gaiaIndex = GaiaIndex(D['EDR3_SOURCE_ID'],
-                             D['pos1'],
-                             D['pos2'],
-                             bin_url=bin_url,
-                             columns=keys,
-                             auth=auth)
+GAIA_PARQUET_FNAME = 'gaia-index-loa-coadd_241127.parquet'
+GAIA_BIN_FNAME = 'gaia-index-loa-coadd_241127.bin'
 
 
 @lrudecorator(100)
@@ -189,8 +94,12 @@ def get_specs(gaia_edr3_source_id=None,
             spectrograph = fiber // 500
 
     if gaia_edr3_source_id is not None:
-        fetch_gaia_index()
-        res = si.gaiaIndex.search_id(gaia_edr3_source_id)
+        gaia_index = get_gaia_index(GAIA_PARQUET_FNAME,
+                                    GAIA_BIN_FNAME,
+                                    cache_dir=os.path.dirname(
+                                        os.path.abspath(__file__)),
+                                    nersc=nersc)
+        res = gaia_index.search_id(gaia_edr3_source_id)
         if res is None:
             raise ValueError('object not found')
         survey = res['SURVEY']
@@ -294,8 +203,13 @@ def get_rvspec_models(gaia_edr3_source_id=None,
         print('Warning subsurvey keyword is deprecated, use program')
     user, pwd = get_desi_login_password()
     if gaia_edr3_source_id is not None:
-        fetch_gaia_index()
-        res = si.gaiaIndex.search_id(gaia_edr3_source_id)
+        gaia_index = get_gaia_index(GAIA_PARQUET_FNAME,
+                                    GAIA_BIN_FNAME,
+                                    cache_dir=os.path.dirname(
+                                        os.path.abspath(__file__)),
+                                    nersc=nersc)
+
+        res = gaia_index.search_id(gaia_edr3_source_id)
         if res is None:
             raise ValueError('object not found')
         survey = res['SURVEY']
