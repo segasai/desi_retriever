@@ -1,8 +1,4 @@
-import astropy.table as atpy
-import copy
-import httpio
 import numpy as np
-import astropy.io.fits as pyfits
 import urllib3
 import os
 from pylru import lrudecorator, lrucache
@@ -142,7 +138,7 @@ def get_specs(gaia_edr3_source_id=None,
     targetid: int (optional)
     expid: int (optional)
         nersc: bool
-         If true we assume we are running on NERSC and we fetch local file 
+         If true we assume we are running on NERSC and we fetch local file
     group_type: str
         The group type (healpix or tiles/cumulative)
     program: str
@@ -282,7 +278,7 @@ def get_rvspec_models(gaia_edr3_source_id=None,
     model_type: str
          The model type (i.e. rvmod or rvjmod)
     nersc: bool
-         If true we assume we are running on NERSC and we fetch local file 
+         If true we assume we are running on NERSC and we fetch local file
     run: string
          The string identifying a software run
     dataset: the dataset fitted (i.e. andes/sv_daily)
@@ -326,10 +322,12 @@ def get_rvspec_models(gaia_edr3_source_id=None,
 
     data_desi = data_desi + f'science/mws/redux/{dataset}/rv_output/{run}/'
     if group_type == 'tiles/cumulative':
-        fname = f'{model_type}_`{spec_type}-{spectrograph}-{tileid}-{night1}.fits'
+        fname = (f'{model_type}_{spec_type}-{spectrograph}-{tileid}-{night1}'
+                 '.fits')
         url = (f'{data_desi}/tiles/cumulative/' + f'{tileid}/{night}/{fname}')
     elif group_type == 'tiles':
-        fname = f'{model_type}_{spec_type}-{spectrograph}-{tileid}-{night1}.fits'
+        fname = (f'{model_type}_{spec_type}-{spectrograph}-{tileid}-{night1}'
+                 '.fits')
         url = (f'{data_desi}/tiles/{tileid}/'
                f'{night}/{fname}')
     elif group_type == 'healpix':
