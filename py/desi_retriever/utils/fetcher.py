@@ -233,13 +233,23 @@ class GaiaIndex:
 
     def search_id(self, key_val):
         xid = np.searchsorted(self.key_arr, key_val)
+        xid_right = np.searchsorted(self.key_arr, key_val, 'right')
         if xid >= len(self.key_arr) or xid < 0:
             return None
         if self.key_arr[xid] == key_val:
+            Ds = []
             with fsspec.open(self.bin_url, 'rb', auth=self.auth).open() as fp:
-                fp.seek(self.pos1[xid])
-                D = pickle.loads(fp.read(self.pos2[xid] - self.pos1[xid]))
-                return dict(zip(self.columns, D))
+                for cur_xid in range(xid, xid_right):
+                    fp.seek(self.pos1[cur_xid])
+                    D = pickle.loads(
+                        fp.read(self.pos2[cur_xid] - self.pos1[cur_xid]))
+                    Ds.append(D)
+            ret = {}
+            for i, c in enumerate(self.columns):
+                ret[c] = []
+                for D in Ds:
+                    ret[c].append(D[i])
+            return ret
         else:
             return None
 

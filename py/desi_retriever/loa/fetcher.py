@@ -105,10 +105,11 @@ def get_specs(gaia_edr3_source_id=None,
         res = gaia_index.search_id(gaia_edr3_source_id)
         if res is None:
             raise ValueError('object not found')
-        survey = res['SURVEY']
-        program = res['PROGRAM']
-        hpx = res['hpx']
-        targetid = res['TARGETID']
+        print('Found %d spectra, returning 1st one' % (len(res['SURVEY'])))
+        survey = res['SURVEY'][0]
+        program = res['PROGRAM'][0]
+        hpx = res['hpx'][0]
+        targetid = res['TARGETID'][0]
 
     if group_type == 'tiles/cumulative':
         night1 = f'thru{night}'
