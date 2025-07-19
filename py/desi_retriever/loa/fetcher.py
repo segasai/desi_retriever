@@ -1,5 +1,6 @@
 import urllib3
 import os
+import astropy.table as atpy
 from pylru import lrudecorator
 from ..utils import (read_spectra, read_models, get_gaia_index,
                      get_desi_login_password)
@@ -8,6 +9,20 @@ urllib3.disable_warnings()
 
 GAIA_PARQUET_FNAME = 'gaia-index-loa-coadd_241127.parquet'
 GAIA_BIN_FNAME = 'gaia-index-loa-coadd_241127.bin'
+
+
+def get_spectra_info_from_gaia_id(source_id, nersc=False):
+    gaia_index = get_gaia_index(GAIA_PARQUET_FNAME,
+                                GAIA_BIN_FNAME,
+                                cache_dir=os.path.dirname(
+                                    os.path.abspath(__file__)),
+                                nersc=nersc)
+
+    res = gaia_index.search_id(source_id)
+    if res is None:
+        raise ValueError('object not found')
+    print('Found %d spectra, returning 1st one' % (len(res['SURVEY'])))
+    return atpy.Table(res)
 
 
 @lrudecorator(100)
@@ -97,15 +112,7 @@ def get_specs(gaia_edr3_source_id=None,
             spectrograph = fiber // 500
 
     if gaia_edr3_source_id is not None:
-        gaia_index = get_gaia_index(GAIA_PARQUET_FNAME,
-                                    GAIA_BIN_FNAME,
-                                    cache_dir=os.path.dirname(
-                                        os.path.abspath(__file__)),
-                                    nersc=nersc)
-        res = gaia_index.search_id(gaia_edr3_source_id)
-        if res is None:
-            raise ValueError('object not found')
-        print('Found %d spectra, returning 1st one' % (len(res['SURVEY'])))
+        res = get_spectra_info_from_gaia_id(gaia_edr3_source_id, nersc=nersc)
         survey = res['SURVEY'][0]
         program = res['PROGRAM'][0]
         hpx = res['hpx'][0]
@@ -159,7 +166,6 @@ def get_rvspec_models(gaia_edr3_source_id=None,
                       hpx=None,
                       coadd=True,
                       survey=None,
-                      subsurvey=None,
                       program=None,
                       spec_type='coadd',
                       group_type='healpix',
@@ -203,26 +209,17 @@ def get_rvspec_models(gaia_edr3_source_id=None,
         has keywords b_wavelength, r_wavelength, z_wavelength
         b_model etc
     """
-    if subsurvey is not None:
-        print('Warning subsurvey keyword is deprecated, use program')
     if nersc:
         user, pwd = None, None
     else:
         user, pwd = get_desi_login_password()
     if gaia_edr3_source_id is not None:
-        gaia_index = get_gaia_index(GAIA_PARQUET_FNAME,
-                                    GAIA_BIN_FNAME,
-                                    cache_dir=os.path.dirname(
-                                        os.path.abspath(__file__)),
-                                    nersc=nersc)
+        res = get_spectra_info_from_gaia_id(gaia_edr3_source_id, nersc=nersc)
+        survey = res['SURVEY'][0]
+        program = res['PROGRAM'][0]
+        hpx = res['hpx'][0]
+        targetid = res['TARGETID'][0]
 
-        res = gaia_index.search_id(gaia_edr3_source_id)
-        if res is None:
-            raise ValueError('object not found')
-        survey = res['SURVEY']
-        program = res['PROGRAM']
-        hpx = res['hpx']
-        targetid = res['TARGETID']
     if spec_type not in ['coadd', 'cframe', 'spectra']:
         raise Exception('unknown')
     if group_type != 'healpix':
