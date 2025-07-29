@@ -6,7 +6,7 @@ on: push
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    environment: test_environment
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9
@@ -21,6 +21,10 @@ jobs:
         pip install ../desi_retriever
         pip install matplotlib
     - name: Test with pytest
+      env:
+	DESI_LOGIN: ${{ secrets.DESI_LOGIN }}
+	DESI_PASSWORD: ${{ secrets.DESI_PASSWORD }}
       run: |
+	echo "$DESI_LOGIN"":""$DESI_PASSWORD" >> ~/.desi_http_user
         pip install pytest
         pytest
