@@ -1,4 +1,3 @@
-import numpy as np
 from desi_retriever.plotter import plot as desi_plot
 from desi_retriever.dr1 import get_specs, get_rvspec_models
 
@@ -25,5 +24,6 @@ def test_dr1_retrieval():
     my_sourceid = 1384229274732017408
     SP = get_specs(gaia_edr3_source_id=my_sourceid)[0]
     SPM = get_rvspec_models(gaia_edr3_source_id=my_sourceid)[0]
+    desi_plot(SP, model=SPM)
     assert SP is not None
     assert SPM is not None
