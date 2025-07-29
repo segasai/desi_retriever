@@ -1,8 +1,7 @@
-
-import matplotlib.pyplot as plt
 import numpy as np
 from desi_retriever.plotter import plot as desi_plot
 from desi_retriever.dr1 import get_specs, get_rvspec_models
+
 
 def test_dr1_retrieval():
     SP = get_specs(survey='sv1',
