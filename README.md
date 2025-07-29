@@ -8,6 +8,7 @@ for another interface.
 
 Author: Sergey Koposov, Email: skoposov AT ed DOT ac _DOT uk, University of Edinburgh
 
+Please acknowledge the software if you use it.
 
 ## Installation
 
