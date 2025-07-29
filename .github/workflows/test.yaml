@@ -19,7 +19,7 @@ jobs:
         python -m pip install --upgrade pip
         # Assumes desi_retriever is a package in the root of your repo
         pip install .[dev] 
-        pip install pytest
+        pip install pytest matplotlib
     - name: Test with pytest
       env:
         # These secrets must be defined in your repository or environment settings
