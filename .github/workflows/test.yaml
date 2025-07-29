@@ -23,8 +23,8 @@ jobs:
     - name: Test with pytest
       env:
         # These secrets must be defined in your repository or environment settings
-        DESI_LOGIN: ${{ secrets.DESI_LOGIN }}
+        DESI_USER ${{ secrets.DESI_USER }}
         DESI_PASSWORD: ${{ secrets.DESI_PASSWORD }}
       run: |
-        echo "$DESI_LOGIN:$DESI_PASSWORD" >> ~/.desi_http_user
+        echo "$DESI_USER:$DESI_PASSWORD" >> ~/.desi_http_user
         pytest
