@@ -21,7 +21,7 @@ jobs:
         pip install ../desi_retriever
         pip install matplotlib
     - name: Test with pytest
-      env:
+      env: |
 	DESI_LOGIN: ${{ secrets.DESI_LOGIN }}
 	DESI_PASSWORD: ${{ secrets.DESI_PASSWORD }}
       run: |
