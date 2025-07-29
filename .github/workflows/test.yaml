@@ -24,7 +24,7 @@ jobs:
       env:
         # These secrets must be defined in your repository or environment settings
         DESI_USER ${{ secrets.DESI_USER }}
-        DESI_PASSWORD: ${{ secrets.DESI_PASSWORD }}
+        DESI_PASSWORD ${{ secrets.DESI_PASSWORD }}
       run: |
         echo "$DESI_USER:$DESI_PASSWORD" >> ~/.desi_http_user
         pytest
