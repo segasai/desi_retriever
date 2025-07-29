@@ -27,10 +27,7 @@ classifiers = [
 dynamic = ["version"]
 
 # Dependencies should be listed here.
-# This replaces reading from requirements.txt.
-# You should copy the contents of your requirements.txt file here as a list of strings.
-# For example: dependencies = ["numpy", "astropy>=5.0"]
-dependencies = ["numpy", "astropy", "httpio", "urllib3","pylru", "fsspec","pyarrow"]
+dependencies = ["numpy", "astropy", "httpio", "urllib3","pylru", "fsspec","pyarrow","scipy"]
 
 [project.urls]
 # Project-related URLs.
