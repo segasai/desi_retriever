@@ -30,9 +30,7 @@ dynamic = ["version"]
 # This replaces reading from requirements.txt.
 # You should copy the contents of your requirements.txt file here as a list of strings.
 # For example: dependencies = ["numpy", "astropy>=5.0"]
-dependencies = [
-    # Add your dependencies from requirements.txt here
-]
+dependencies = ["numpy", "astropy", "httpio", "urllib3","pylru", "fsspec","pyarrow"]
 
 [project.urls]
 # Project-related URLs.

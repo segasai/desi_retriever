@@ -1,0 +1,30 @@
+
+name: Test desi_retriever
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Install desi_retriever
+      run: pip install -e . # Install in editable mode
+    - name: Test with pytest
+      run: |
+        pip install pytest
+        pytest
