@@ -1,6 +1,8 @@
 # desi_retriever
 
-This is a tool that allows you to fetch desi spectra without manually downloading them.
+This is a tool that allows you to fetch DESI spectra without manually downloading them.
+This tool can be run on your laptop and does not have to run on NERSC. (it still can run on NERSC, in 
+this case it will be typically faster)
 
 You may also consider using SPARCL 
 https://astrosparcl.datalab.noirlab.edu/
