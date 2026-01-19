@@ -3,7 +3,7 @@ import os
 import astropy.table as atpy
 from pylru import lrudecorator
 from ..utils import (read_spectra, read_models, get_gaia_index,
-                     get_desi_login_password)
+                     get_desi_login_password, read_spectra_gz)
 
 urllib3.disable_warnings()
 
@@ -145,15 +145,22 @@ def get_specs(gaia_edr3_source_id=None,
         print(url)
     else:
         raise Exception('oops')
-    return read_spectra(url,
-                        targetid,
-                        fiber=fiber,
-                        expid=expid,
-                        mask=mask,
-                        ivar=ivar,
-                        fibermap=fibermap,
-                        user=user,
-                        pwd=pwd)
+
+    if spec_type == 'spectra' and not nersc:
+        reader = read_spectra_gz
+    else:
+        reader = read_spectra
+
+    return reader(url,
+                  targetid,
+                  fiber=fiber,
+                  expid=expid,
+                  mask=mask,
+                  ivar=ivar,
+                  fibermap=fibermap,
+                  user=user,
+                  pwd=pwd,
+                  dataset=dataset)
 
 
 @lrudecorator(100)

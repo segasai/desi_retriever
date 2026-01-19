@@ -36,6 +36,66 @@ username:password
     return si.DESI_USER, si.DESI_PASSWD
 
 
+def process_spectra_hdus(hdus,
+                         targetid,
+                         fiber=None,
+                         expid=None,
+                         mask=False,
+                         ivar=False,
+                         fibermap=False):
+    """
+    Process the spectra HDUs and return the spectra
+    """
+    ftab = atpy.Table(hdus['FIBERMAP'].data)
+
+    if expid is not None:
+        xind = ftab['EXPID'] == expid
+    else:
+        xind = np.ones(len(ftab), dtype=bool)
+    if targetid is not None:
+        xids = np.nonzero((ftab['TARGETID'] == targetid) & xind)[0]
+    else:
+        xids = np.nonzero((ftab['FIBER'] == fiber) & xind)[0]
+    if len(xids) == 0:
+        print('Warning no spectra was found with provided info')
+        return []
+
+    waves = {}
+    for arm in 'BRZ':
+        waves[arm] = hdus[arm + '_WAVELENGTH'].data
+
+    fluxes = {}
+    for arm in 'BRZ':
+        fluxes[arm] = hdus[arm + '_FLUX'].section
+
+    masks = {}
+    if mask:
+        for arm in 'BRZ':
+            masks[arm] = hdus[arm + '_MASK'].section
+
+    ivars = {}
+    if ivar:
+        for arm in 'BRZ':
+            ivars[arm] = hdus[arm + '_IVAR'].section
+    rets = []
+    for xid in xids:
+        ret = {}
+        if fibermap:
+            ret['fibermap'] = ftab[xid]
+        for arm in 'BRZ':
+            ret[arm.lower() + '_wavelength'] = waves[arm]
+            ret[arm.lower() + '_flux'] = fluxes[arm][xid, :]
+        if mask:
+            for arm in 'BRZ':
+                ret[arm.lower() + '_mask'] = masks[arm][xid, :]
+        if ivar:
+            for arm in 'BRZ':
+                ret[arm.lower() + '_ivar'] = ivars[arm][xid, :]
+
+        rets.append(ret)
+    return rets
+
+
 def read_spectra(url,
                  targetid,
                  fiber=None,
@@ -44,7 +104,8 @@ def read_spectra(url,
                  ivar=False,
                  fibermap=False,
                  user=None,
-                 pwd=None):
+                 pwd=None,
+                 dataset=None):
     """
     Read the spectra from the given url
     Parameters
@@ -97,53 +158,13 @@ def read_spectra(url,
             fp._cache = si.cache[url]
         hdus = pyfits.open(fp)
 
-        ftab = atpy.Table(hdus['FIBERMAP'].data)
-
-        if expid is not None:
-            xind = ftab['EXPID'] == expid
-        else:
-            xind = np.ones(len(ftab), dtype=bool)
-        if targetid is not None:
-            xids = np.nonzero((ftab['TARGETID'] == targetid) & xind)[0]
-        else:
-            xids = np.nonzero((ftab['FIBER'] == fiber) & xind)[0]
-        if len(xids) == 0:
-            print('Warning no spectra was found with provided info')
-            return []
-
-        waves = {}
-        for arm in 'BRZ':
-            waves[arm] = hdus[arm + '_WAVELENGTH'].data
-
-        fluxes = {}
-        for arm in 'BRZ':
-            fluxes[arm] = hdus[arm + '_FLUX'].section
-
-        masks = {}
-        if mask:
-            for arm in 'BRZ':
-                masks[arm] = hdus[arm + '_MASK'].section
-
-        ivars = {}
-        if ivar:
-            for arm in 'BRZ':
-                ivars[arm] = hdus[arm + '_IVAR'].section
-        rets = []
-        for xid in xids:
-            ret = {}
-            if fibermap:
-                ret['fibermap'] = ftab[xid]
-            for arm in 'BRZ':
-                ret[arm.lower() + '_wavelength'] = waves[arm]
-                ret[arm.lower() + '_flux'] = fluxes[arm][xid, :]
-            if mask:
-                for arm in 'BRZ':
-                    ret[arm.lower() + '_mask'] = masks[arm][xid, :]
-            if ivar:
-                for arm in 'BRZ':
-                    ret[arm.lower() + '_ivar'] = ivars[arm][xid, :]
-
-            rets.append(ret)
+        rets = process_spectra_hdus(hdus,
+                                    targetid,
+                                    fiber=fiber,
+                                    expid=expid,
+                                    mask=mask,
+                                    ivar=ivar,
+                                    fibermap=fibermap)
         if not local_mode:
             si.cache[url] = copy.copy(fp._cache)
         return rets

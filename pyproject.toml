@@ -27,7 +27,7 @@ classifiers = [
 dynamic = ["version"]
 
 # Dependencies should be listed here.
-dependencies = ["numpy", "astropy", "httpio", "urllib3","pylru", "fsspec","pyarrow","scipy"]
+dependencies = ["numpy", "astropy", "httpio", "urllib3","pylru", "fsspec","pyarrow","scipy", "indexed_gzip"]
 
 [project.urls]
 # Project-related URLs.
