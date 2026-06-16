@@ -10,8 +10,9 @@ from ..utils import (get_desi_login_password, get_gaia_index, read_models,
 urllib3.disable_warnings()
 
 DEFAULT_NSIDE = 64
-GAIA_PARQUET_FNAME = None
-GAIA_BIN_FNAME = None
+GAIA_PARQUET_FNAME = 'gaia-index-matterhorn-coadd_260616.parquet'
+GAIA_BIN_FNAME = 'gaia-index-matterhorn-coadd_260616.bin'
+
 
 
 def _resolve_uniqpix(uniqpix=None, hpx=None, nside=DEFAULT_NSIDE):
@@ -22,11 +23,6 @@ def _resolve_uniqpix(uniqpix=None, hpx=None, nside=DEFAULT_NSIDE):
     return int(4 * int(nside)**2 + int(hpx))
 
 
-def _first_table_value(table, *names):
-    for name in names:
-        if name in table.colnames:
-            return table[name][0]
-    return None
 
 
 def get_spectra_info_from_gaia_id(source_id, nersc=False):
@@ -144,14 +140,7 @@ def get_specs(gaia_edr3_source_id=None,
         survey = res['SURVEY'][0]
         program = res['PROGRAM'][0]
         targetid = res['TARGETID'][0]
-        uniqpix = _first_table_value(res, 'UNIQPIX', 'uniqpix')
-        if uniqpix is None:
-            hpx = _first_table_value(res, 'HPXPIXEL', 'HEALPIX', 'healpix',
-                                     'hpx')
-            nside_from_index = _first_table_value(res, 'HPXNSIDE', 'NSIDE',
-                                                  'nside')
-            if nside_from_index is not None:
-                nside = nside_from_index
+        uniqpix = res['hpx'][0]
 
     if group_type == 'tiles/cumulative':
         night1 = f'thru{night}'
@@ -270,14 +259,7 @@ def get_rvspec_models(gaia_edr3_source_id=None,
         survey = res['SURVEY'][0]
         program = res['PROGRAM'][0]
         targetid = res['TARGETID'][0]
-        uniqpix = _first_table_value(res, 'UNIQPIX', 'uniqpix')
-        if uniqpix is None:
-            hpx = _first_table_value(res, 'HPXPIXEL', 'HEALPIX', 'healpix',
-                                     'hpx')
-            nside_from_index = _first_table_value(res, 'HPXNSIDE', 'NSIDE',
-                                                  'nside')
-            if nside_from_index is not None:
-                nside = nside_from_index
+        uniqpix = res['hpx'][0]
 
     if spec_type not in ['coadd', 'cframe', 'spectra']:
         raise Exception('unknown')
