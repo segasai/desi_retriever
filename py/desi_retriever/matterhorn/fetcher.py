@@ -178,7 +178,7 @@ def get_specs(gaia_edr3_source_id=None,
         if uniqpix is None:
             raise ValueError('uniqpix or hpx must be specified')
         fname = f'{spec_type}-{survey}-{program}-{uniqpix}{fname_end}'
-        url = (f'{data_desi}/spectro/redux/{dataset}/{survey}/'
+        url = (f'{data_desi}/spectro/redux/{dataset}/spectra/{survey}/'
                f'{program}/{uniqpix//100}/{uniqpix}/{fname}')
         print(url)
     else:
@@ -317,5 +317,6 @@ def get_rvspec_models(gaia_edr3_source_id=None,
         url = (f'{data_desi}/{survey}/'
                f'{program}/{uniqpix//100}/{uniqpix}/{fname}')
         print(url)
-
+    else:
+        raise ValueError('wrong group type')
     return read_models(url, targetid, fiber=fiber, user=user, pwd=pwd)
